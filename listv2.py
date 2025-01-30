@@ -122,7 +122,7 @@ def update_token_display(token_data):
             more_info_url = None  # Handle other chains if needed, set to None as fallback
             chart_url = None  # Fallback for unsupported chains
 
-        # Create unique session state for buttons to ensure separation
+        # Create session state variables to track button clicks
         if f"clicked_info_{idx}" not in st.session_state:
             st.session_state[f"clicked_info_{idx}"] = False
         if f"clicked_chart_{idx}" not in st.session_state:
