@@ -50,15 +50,16 @@ if not st.session_state.authenticated:
         if password == PASSWORD:
             st.session_state.authenticated = True  # Store authentication status
             st.success("✅ Access granted! Welcome to Soleth Ai Sniper v1 BETA")
+            st.rerun()  # 🔄 Reload the app UI to show tokens
         else:
             st.warning("❌ Incorrect password. Try again.")
 
     st.stop()  # Prevents the rest of the app from running until authenticated
 
-# ✅ If the password is correct, the app UI is displayed
+# ✅ If the password is correct, continue to fetch & display tokens
 st.success("✅ Access granted! Welcome to Soleth Ai Sniper v1 BETA")
 
-# Fetch image dynamically and make it full-width for the main app
+# Full-width image in main app
 st.markdown(f"""
     <style>
         .full-width-img {{
@@ -74,6 +75,117 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# App UI continues...
-st.title("Soleth Ai Sniper v1 BETA")
-st.write("Looking for the next 10x...")
+# ✅ API Configuration
+API_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/58.0.3029.110 Safari/537.36"
+    )
+}
+
+# ✅ Function to fetch token data
+def get_token_data() -> list:
+    try:
+        response = requests.get(API_URL, headers=HEADERS)
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, dict) and "tokens" in data:
+            return data["tokens"]
+        elif isinstance(data, list):
+            return data
+        return []
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error fetching data: {e}")
+        return []
+
+# ✅ Function to display tokens
+def update_token_display(token_data):
+    st.subheader(f"Displaying {len(token_data)} tokens...")
+
+    total_tokens = len(token_data)
+    progress_bar = st.progress(0)  # Initialize the progress bar
+
+    for idx, token in enumerate(token_data):
+        token_name = token.get('name', 'No Name Available')
+
+        # Construct the correct "More Info" URL based on the token's chain_id
+        if token.get('chain_id') == 'solana':
+            more_info_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
+            chart_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
+        elif token.get('chain_id') == 'ethereum':
+            more_info_url = f"https://coinmarketcap.com/dexscan/ethereum/{token.get('tokenAddress')}"
+            chart_url = f"https://dexscreener.com/ethereum/{token.get('tokenAddress')}"
+        else:
+            more_info_url = None  
+            chart_url = None  
+
+        st.write(f"**{token_name}**")  
+        st.write(f"Token Address: {token.get('tokenAddress', 'No Address Available')}")
+        st.write(f"Liquidity: {token.get('liquidity', 'N/A')}")
+        st.write(f"Volume: {token.get('volume', 'N/A')}")
+        st.write(f"Holders: {token.get('holders', 'N/A')}")
+
+        icon_url = token.get('icon', '')
+        if icon_url:
+            response = requests.get(icon_url)
+            img_data = Image.open(BytesIO(response.content))
+            img_data = img_data.resize((50, 50))
+            st.image(img_data)
+
+        token_address = token.get('tokenAddress', 'No Address Available')
+        st.text_input("Token Address", value=token_address, key=f"token_address_{idx}")
+
+        more_info_button = st.button("More Info", key=f"info_button_{idx}")
+        view_chart_button = st.button("View Chart", key=f"chart_button_{idx}")
+
+        if more_info_button and more_info_url:
+            webbrowser.open(more_info_url)
+
+        if view_chart_button and chart_url:
+            webbrowser.open(chart_url)
+
+        progress_bar.progress((idx + 1) / total_tokens) 
+
+# ✅ Refresh token list function
+def refresh_token_list(chain_filter=None):
+    token_data = get_token_data()
+    
+    if not token_data:
+        st.write("No token data found.")
+    else:
+        if chain_filter:
+            token_data = [token for token in token_data if token.get('chain_id', '').lower() == chain_filter.lower()]
+        update_token_display(token_data)
+
+# ✅ Sidebar Filter option for selecting chain
+chain_filter = st.sidebar.radio("Select Chain", ("All Chains", "Solana", "Ethereum"))
+
+if chain_filter == "Solana":
+    chain_filter = "solana"
+elif chain_filter == "Ethereum":
+    chain_filter = "ethereum"
+else:
+    chain_filter = None  # No filter if "All Chains" is selected
+
+# ✅ Refresh button
+refresh_button_clicked = st.button("Refresh Tokens")
+
+if refresh_button_clicked:
+    refresh_token_list(chain_filter)
+else:
+    refresh_token_list(chain_filter)  # Load tokens initially
+
+# ✅ Footer with social media links
+st.markdown("""
+    <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: white !important; background-color: black;">
+        <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
+        <a href="https://x.com/nexgonic" target="_blank">
+            <i class="fab fa-twitter" style="font-size: 30px; color: white;"></i>
+        </a>
+        <a href="https://t.me/Nexgonic" target="_blank">
+            <i class="fab fa-telegram" style="font-size: 30px; color: white;"></i>
+        </a>
+    </footer>
+""", unsafe_allow_html=True)
