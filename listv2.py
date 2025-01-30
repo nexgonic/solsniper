@@ -129,11 +129,6 @@ st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wi
 st.title("Top Tokens on Solana and Ethereum")
 st.write("Refreshing token list...")
 
-# Show live user count and visit count
-st.sidebar.markdown("### Live Metrics")
-st.sidebar.write(f"**Live Users**: {st.session_state['user_count']}")
-st.sidebar.write(f"**Total Visits**: {get_view_count()}")
-
 # Filter option for selecting chain
 chain_filter = st.sidebar.radio("Select Chain", ("All Chains", "Solana", "Ethereum"))
 
