@@ -1,6 +1,6 @@
 import requests
-import webbrowser
 import streamlit as st
+import webbrowser
 from PIL import Image
 from io import BytesIO
 
@@ -97,8 +97,10 @@ st.title("Top Tokens on Solana and Ethereum")
 st.write("Refreshing token list...")
 
 # Add a refresh button
-if st.button("Refresh Tokens"):
+refresh_button_clicked = st.button("Refresh Tokens")
+if refresh_button_clicked:
     refresh_token_list()
 
 # Initially load the token list
-refresh_token_list()
+if not refresh_button_clicked:
+    refresh_token_list()
