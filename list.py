@@ -44,15 +44,14 @@ def append_to_log(message: str, extra_newline: bool = True) -> None:
     # Add a newline if specified
     new_message = f"{message}\n\n" if extra_newline else f"{message}\n"
 
-    # Safely update the session state with the new log message
-    current_logs = st.session_state.log_area
-    updated_logs = current_logs + new_message
+    # Add new message to the log
+    st.session_state.log_area += new_message
 
-    # Update the session state log_area only once
-    st.session_state.log_area = updated_logs
 
-    # Display the updated log
-    st.empty().text_area("Logs", value=st.session_state.log_area, height=300, max_chars=None, key="log_area", disabled=True)
+def display_logs():
+    """ Render logs using Streamlit once the session state is updated. """
+    if "log_area" in st.session_state:
+        st.text_area("Logs", value=st.session_state.log_area, height=300, max_chars=None, key="log_area", disabled=True)
 
 
 ################################################################################
@@ -222,6 +221,8 @@ def main():
 
     if fetch_button:
         fetch_process()
+
+    display_logs()
 
 
 if __name__ == "__main__":
