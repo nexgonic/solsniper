@@ -99,12 +99,16 @@ def update_token_display(token_data):
 
         progress_bar.progress((idx + 1) / total_tokens)  # Update progress bar
 
-def refresh_token_list():
+def refresh_token_list(chain_filter=None):
     token_data = get_token_data()
 
     if not token_data:
         st.write("No token data found.")
     else:
+        # Apply chain filter if specified
+        if chain_filter:
+            token_data = [token for token in token_data if token.get('chain') == chain_filter]
+        
         update_token_display(token_data)
 
 # Track active users using session_state
@@ -130,14 +134,38 @@ st.sidebar.markdown("### Live Metrics")
 st.sidebar.write(f"**Live Users**: {st.session_state['user_count']}")
 st.sidebar.write(f"**Total Visits**: {get_view_count()}")
 
+# Filter option for selecting chain
+chain_filter = st.sidebar.radio("Select Chain", ("All Chains", "Solana", "Ethereum"))
+
+# Set the filter value based on the selection
+if chain_filter == "Solana":
+    chain_filter = "solana"
+elif chain_filter == "Ethereum":
+    chain_filter = "ethereum"
+else:
+    chain_filter = None  # No filter if "All Chains" is selected
+
 # Increment view count each time a user visits
 increment_view_count()
 
 # Add a refresh button
 refresh_button_clicked = st.button("Refresh Tokens")
 if refresh_button_clicked:
-    refresh_token_list()
+    refresh_token_list(chain_filter)
 
 # Initially load the token list
 if not refresh_button_clicked:
-    refresh_token_list()
+    refresh_token_list(chain_filter)
+
+# Footer with copyright and social media links
+st.markdown("""
+    <footer style="text-align:center; padding: 10px; font-size: 12px;">
+        <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
+        <a href="https://twitter.com/nexgonic" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2021.svg" width="30" height="30" alt="Twitter">
+        </a>
+        <a href="https://t.me/nexgonic" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/8/83/Telegram_2015_logo.svg" width="30" height="30" alt="Telegram">
+        </a>
+    </footer>
+""", unsafe_allow_html=True)
