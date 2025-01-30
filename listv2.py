@@ -115,7 +115,7 @@ def refresh_token_list(chain_filter=None):
 # Create the Streamlit app layout
 st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
 
-st.title("Soleth Ai Sniper v1 BETA")
+st.title("Top Tokens on Solana and Ethereum")
 st.write("Refreshing token list...")
 
 # Filter option for selecting chain
@@ -148,8 +148,16 @@ st.markdown("""
         <a href="https://twitter.com/nexgonic" target="_blank">
             <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2021.svg" width="30" height="30" alt="Twitter">
         </a>
-        <a href="https://t.me/nexgonic" target="_blank">
+        <a href="https://t.me/Nexgonic" target="_blank">
             <img src="https://upload.wikimedia.org/wikipedia/commons/8/83/Telegram_2015_logo.svg" width="30" height="30" alt="Telegram">
         </a>
     </footer>
+""", unsafe_allow_html=True)
+
+# Sticky bottom bar with message
+st.markdown("""
+    <div style="position: fixed; bottom: 0; left: 0; width: 100%; background-color: #f8f9fa; 
+    text-align: center; padding: 10px; font-size: 14px; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);">
+        <p style="margin: 0;">Let us know what you think and features you would like to see.</p>
+    </div>
 """, unsafe_allow_html=True)
