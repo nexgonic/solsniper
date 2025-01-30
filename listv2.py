@@ -15,39 +15,6 @@ HEADERS = {
     )
 }
 
-def check_lp_unlocked(token_address: str, chain: str) -> bool:
-    """
-    Checks if the token has unlocked LP or meets certain criteria for Solana or Ethereum.
-    """
-    # For the sake of brevity, we assume these URLs for simplicity
-    if chain == 'solana':
-        snifscore_url = f"https://www.solsniffer.com/scanner/{token_address}"
-    elif chain == 'ethereum':
-        snifscore_url = f"https://honeypot.is/ethereum?address={token_address}"
-    else:
-        return False  # If it's neither Solana nor Ethereum, return False
-    
-    try:
-        response = requests.get(snifscore_url)
-        page_content = response.text
-
-        # For Ethereum, check if the page contains "LOW RISK OF HONEYPOT"
-        if chain == 'ethereum' and "LOW RISK OF HONEYPOT" not in page_content:
-            return True  # Token is risky, skip it
-
-        # For Solana (SolSniffer), check for significant private wallet supply or unlocked LP
-        if chain == 'solana':
-            if "Private wallet holds significant supply." in page_content:
-                return True
-            if "Large portion of LP is unlocked." in page_content:
-                return True
-
-        return False  # If the token passes the checks, return False (allow it)
-
-    except Exception as e:
-        print(f"Error checking {snifscore_url} for {token_address}: {e}")
-        return False
-
 def get_token_data() -> list:
     try:
         response = requests.get(API_URL, headers=HEADERS)
@@ -71,10 +38,6 @@ def update_token_display(token_data):
 
     total_tokens = len(token_data)
     progress_bar = st.progress(0)  # Initialize the progress bar
-
-    # Collect token addresses and chains to check LP status in parallel
-    token_addresses = [token.get('tokenAddress', 'No Address Available') for token in token_data]
-    token_chains = [token.get('chain', 'solana') for token in token_data]  # Default to Solana if not specified
 
     for idx, token in enumerate(token_data):
         # Construct the correct "More Info" URL based on the token's chain
@@ -103,18 +66,19 @@ def update_token_display(token_data):
             img_data = img_data.resize((50, 50))
             st.image(img_data)
 
-        # Instead of copying to clipboard, use a text input for the token address
+        # Display token address
         token_address = token.get('tokenAddress', 'No Address Available')
         st.text_input("Token Address", value=token_address, key=f"token_address_{idx}")
 
         # Buttons for More Info and View Chart
-        if st.button("More Info", key=f"info_button_{idx}"):
-            if more_info_url:
-                webbrowser.open(more_info_url)
+        more_info_button = st.button("More Info", key=f"info_button_{idx}")
+        view_chart_button = st.button("View Chart", key=f"chart_button_{idx}")
 
-        if st.button("View Chart", key=f"chart_button_{idx}"):
-            if chart_url:
-                webbrowser.open(chart_url)
+        if more_info_button and more_info_url:
+            webbrowser.open(more_info_url)
+
+        if view_chart_button and chart_url:
+            webbrowser.open(chart_url)
 
         progress_bar.progress((idx + 1) / total_tokens)  # Update progress bar
 
