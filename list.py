@@ -142,7 +142,7 @@ def display_token(token: dict, index: int):
             img = Image.open(BytesIO(img_data))
 
             # Display the image in the Streamlit app
-            st.image(img, caption="Token Icon", use_column_width=True)
+            st.image(img, caption="Token Icon", use_container_width=True)
         except Exception as e:
             append_to_log(f"Error loading icon: {e}")
 
