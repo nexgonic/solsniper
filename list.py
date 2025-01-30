@@ -30,19 +30,23 @@ SOLID_LINE = "█" * 150
 # UI & LOGGING
 ################################################################################
 
+def initialize_log_area():
+    """ Initialize log area in session state if it doesn't exist. """
+    if "log_area" not in st.session_state:
+        st.session_state.log_area = ""  # Initialize log_area if not yet set
+
 def append_to_log(message: str, extra_newline: bool = True) -> None:
     """
     Appends plain text to the log with optional extra spacing.
     """
+    initialize_log_area()  # Ensure the log_area is initialized
+
     if extra_newline:
         new_message = f"{message}\n\n"
     else:
         new_message = f"{message}\n"
     
     # Update the log content dynamically
-    if "log_area" not in st.session_state:
-        st.session_state.log_area = ""  # Initialize log_area if not yet set
-    
     st.session_state.log_area += new_message
 
     log_container = st.empty()  # Create an empty container for the log
