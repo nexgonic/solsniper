@@ -1,17 +1,82 @@
 import requests
-from tkinter import messagebox
-from tkinter.ttk import Progressbar
-from PIL import Image, ImageTk
-import io
-import pyperclip
-import threading
-import asyncio
-import aiohttp
-import random
+import webbrowser
+import streamlit as st
+from PIL import Image
+from io import BytesIO
+import base64
 
-# Define the API URL and headers for the request
+# Set page config first, before any other Streamlit commands
+st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
+
+# 🔒 Password protection using session state
+PASSWORD = "early"
+
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+# Fetch image dynamically for authentication page
+logo_url = "https://nextgenspeed.com/wp-content/uploads/2025/01/bannerlogo.png"
+response = requests.get(logo_url)
+
+if response.status_code == 200:
+    img = Image.open(BytesIO(response.content))
+    img_buffer = BytesIO()
+    img.save(img_buffer, format="PNG")
+    img_base64 = base64.b64encode(img_buffer.getvalue()).decode()
+
+    # Centered image at the top of the authentication page
+    st.markdown(f"""
+        <style>
+            .auth-logo-container {{
+                text-align: center;
+                margin-bottom: 20px;
+            }}
+            .auth-logo {{
+                width: 300px;
+                height: auto;
+                display: inline-block;
+            }}
+        </style>
+        <div class="auth-logo-container">
+            <img class="auth-logo" src="data:image/png;base64,{img_base64}" alt="Soleth Ai Sniper Logo">
+        </div>
+    """, unsafe_allow_html=True)
+
+if not st.session_state.authenticated:
+    st.title("🔒 Access Restricted")
+    password = st.text_input("Enter Password", type="password")
+    
+    if st.button("Login"):
+        if password == PASSWORD:
+            st.session_state.authenticated = True  # Store authentication status
+            st.success("✅ Access granted! Welcome to Soleth Ai Sniper v1 BETA")
+            st.rerun()  # 🔄 Reload the app UI to show tokens
+        else:
+            st.warning("❌ Incorrect password. Try again.")
+
+    st.stop()  # Prevents the rest of the app from running until authenticated
+
+# ✅ If the password is correct, continue to fetch & display tokens
+st.success("✅ Access granted! Welcome to Soleth Ai Sniper v1 BETA")
+
+# Full-width image in main app
+st.markdown(f"""
+    <style>
+        .full-width-img {{
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+        }}
+    </style>
+    <div style="text-align: center;">
+        <img class="full-width-img" src="data:image/png;base64,{img_base64}" alt="Soleth Ai Sniper Logo">
+    </div>
+""", unsafe_allow_html=True)
+
+# ✅ API Configuration
 API_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
-FETCH_INTERVAL = 10  # Interval (in seconds) between consecutive fetches
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -20,189 +85,102 @@ HEADERS = {
     )
 }
 
-# Flag to control pause and resume
-is_paused = False
-
-# Asynchronous function to check the LP unlocked status
-async def check_lp_unlocked(session, token_address: str, chain: str) -> bool:
-    if chain == 'solana':
-        snifscore_url = f"https://www.solsniffer.com/scanner/{token_address}"
-    elif chain == 'ethereum':
-        snifscore_url = f"https://honeypot.is/ethereum?address={token_address}"
-    else:
-        return False
-
-    retries = 3
-    for attempt in range(retries):
-        try:
-            async with session.get(snifscore_url) as response:
-                page_content = await response.text()
-
-                if chain == 'ethereum' and "LOW RISK OF HONEYPOT" not in page_content:
-                    return True
-
-                if chain == 'solana':
-                    if "Private wallet holds significant supply." in page_content:
-                        return True
-                    if "Large portion of LP is unlocked." in page_content:
-                        return True
-
-                return False
-        except Exception as e:
-            print(f"Error checking {snifscore_url} for {token_address}: {e}")
-            if attempt < retries - 1:
-                delay = random.uniform(2, 5)
-                await asyncio.sleep(delay)
-            else:
-                return False
-
-# Function to fetch token data
-async def get_token_data(session) -> list:
+# ✅ Function to fetch token data
+def get_token_data(chain_filter=None) -> list:
     try:
-        response = await session.get(API_URL, headers=HEADERS)
+        response = requests.get(API_URL, headers=HEADERS)
         response.raise_for_status()
+        data = response.json()
 
-        data = await response.json()
+        # Extract token list
         if isinstance(data, dict) and "tokens" in data:
             tokens = data["tokens"]
         elif isinstance(data, list):
             tokens = data
         else:
             return []
-        print(f"Fetched {len(tokens)} tokens.")
+
+        # ✅ Filter tokens by chain
+        if chain_filter:
+            tokens = [token for token in tokens if token.get("chainId", "").lower() == chain_filter.lower()]
+
         return tokens
     except requests.exceptions.RequestException as e:
-        print(f"Error fetching data: {e}")
+        st.error(f"❌ Error fetching data: {e}")
         return []
 
-# Function to refresh token list
-async def refresh_token_list():
-    print("Refreshing token list...")
-    output_label.config(text="Refreshing token list...")  # Update output label
-    
-    async with aiohttp.ClientSession() as session:
-        token_data = await get_token_data(session)
+# ✅ Function to display tokens
+def update_token_display(token_data):
+    st.subheader(f"Displaying {len(token_data)} tokens...")
 
-        if not token_data:
-            print("No token data found.")
-            output_label.config(text="No token data found.")
-        else:
-            print(f"Found {len(token_data)} tokens.")
-            output_label.config(text=f"Found {len(token_data)} tokens.")
-
-        if token_data:
-            await update_token_display(session, token_data)
-
-# Function to update token display
-async def update_token_display(session, token_data):
-    print(f"Displaying {len(token_data)} tokens...")
-    output_label.config(text=f"Displaying {len(token_data)} tokens...")  # Update output label
-    if not token_data:
-        print("No tokens to display.")
-        return
+    if len(token_data) == 0:
+        st.warning("⚠️ No tokens found for the selected chain.")
 
     total_tokens = len(token_data)
-    progress_bar["maximum"] = total_tokens
+    progress_bar = st.progress(0)  # Initialize the progress bar
 
-    token_addresses = [token.get('tokenAddress', 'No Address Available') for token in token_data]
-    token_chains = [token.get('chain', 'solana') for token in token_data]
+    for idx, token in enumerate(token_data):
+        token_name = token.get('name', 'No Name Available')
 
-    # Run the LP check concurrently for all tokens
-    lp_results = await asyncio.gather(
-        *[check_lp_unlocked(session, addr, chain) for addr, chain in zip(token_addresses, token_chains)]
-    )
+        # Construct the correct "More Info" URL based on the token's chain_id
+        if token.get('chainId') == 'solana':
+            more_info_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
+            chart_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
+        elif token.get('chainId') == 'ethereum':
+            more_info_url = f"https://coinmarketcap.com/dexscan/ethereum/{token.get('tokenAddress')}"
+            chart_url = f"https://dexscreener.com/ethereum/{token.get('tokenAddress')}"
+        else:
+            more_info_url = None  
+            chart_url = None  
 
-    for idx, (token, lp_status) in enumerate(zip(token_data, lp_results)):
-        if is_paused:  # Check if pause button has been clicked
-            return
-        if lp_status:
-            progress_bar["value"] = idx + 1
-            continue
-
-        frame = tk.Frame(token_frame, bg='#364f6b', bd=0, relief="flat", highlightthickness=0)
-        frame.grid(row=idx, column=0, sticky="ew", pady=5, padx=10)
-
-        icon_label = tk.Label(frame, bg="#364f6b")
-        token_address_label = tk.Label(frame, text=token.get('tokenAddress', 'No Address Available'),
-                                       font=("Helvetica", 12, "bold"), fg="#f1f1f1", bg="#364f6b")
-
-        copy_button = tk.Button(frame, text="Copy", command=lambda token_address=token.get('tokenAddress'): pyperclip.copy(token_address),
-                                font=("Helvetica", 10), bg="#fca311", fg="#ffffff")
-
-        info_button = tk.Button(frame, text="Info", command=lambda token_address=token.get('tokenAddress'): open_url(f"https://www.solsniffer.com/scanner/{token_address}"),
-                                font=("Helvetica", 10), bg="#fca311", fg="#ffffff")
-
-        chart_button = tk.Button(frame, text="Chart", command=lambda url=token.get('url'): open_url(url),
-                                 font=("Helvetica", 10), bg="#fca311", fg="#ffffff")
-
-        icon_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-        token_address_label.grid(row=0, column=1, padx=10, pady=5, sticky="w")
-        copy_button.grid(row=0, column=2, padx=10, pady=5, sticky="w")
-        info_button.grid(row=0, column=3, padx=10, pady=5, sticky="w")
-        chart_button.grid(row=0, column=4, padx=10, pady=5, sticky="w")
+        st.write(f"**{token_name}**")  
+        st.write(f"Token Address: {token.get('tokenAddress', 'No Address Available')}")
+        st.write(f"Liquidity: {token.get('liquidity', 'N/A')}")
+        st.write(f"Volume: {token.get('volume', 'N/A')}")
+        st.write(f"Holders: {token.get('holders', 'N/A')}")
 
         icon_url = token.get('icon', '')
-        icon_img = None
         if icon_url:
             response = requests.get(icon_url)
-            img_data = Image.open(io.BytesIO(response.content))
+            img_data = Image.open(BytesIO(response.content))
             img_data = img_data.resize((50, 50))
-            icon_img = ImageTk.PhotoImage(img_data)
-            icon_label.config(image=icon_img)
-            icon_label.image = icon_img
+            st.image(img_data)
 
-        progress_bar["value"] = idx + 1
+        token_address = token.get('tokenAddress', 'No Address Available')
+        st.text_input("Token Address", value=token_address, key=f"token_address_{idx}")
 
-# Refresh token list in a background thread
-def refresh_token_list_thread():
-    threading.Thread(target=lambda: asyncio.run(refresh_token_list()), daemon=True).start()
+        progress_bar.progress((idx + 1) / total_tokens) 
 
-def open_url(url):
-    webbrowser.open(url)
+# ✅ Sidebar Filter option for selecting chain
+chain_filter = st.sidebar.radio("Select Chain", ("All Chains", "Solana", "Ethereum"))
 
-def toggle_pause():
-    global is_paused
-    is_paused = not is_paused
-    if is_paused:
-        pause_button.config(text="Resume")
-    else:
-        pause_button.config(text="Pause")
-        refresh_token_list_thread()  # Continue fetching if resumed
+# Convert filter value to match API
+if chain_filter == "Solana":
+    chain_filter = "solana"
+elif chain_filter == "Ethereum":
+    chain_filter = "ethereum"
+else:
+    chain_filter = None  # No filter if "All Chains" is selected
 
-# Create the main GUI window
-root = tk.Tk()
-root.title("Newest Tokens on Solana and Ethereum")
-root.geometry("1250x950")
-root.configure(bg='#1e213a')
+# ✅ Refresh button
+refresh_button_clicked = st.button("Refresh Tokens")
 
-# Add a label for the title
-title_label = tk.Label(root, text="Top Tokens", font=("Helvetica", 28, "bold"), fg="#f1f1f1", bg="#1e213a")
-title_label.pack(pady=30)
+if refresh_button_clicked:
+    refresh_token_list = get_token_data(chain_filter)
+    update_token_display(refresh_token_list)
+else:
+    refresh_token_list = get_token_data(chain_filter)
+    update_token_display(refresh_token_list)  # Load tokens initially
 
-# Create a label for console output above the progress bar
-output_label = tk.Label(root, text="Initializing...", font=("Helvetica", 12), fg="#f1f1f1", bg="#1e213a")
-output_label.pack(pady=10)
-
-# Create a frame to hold the tokens list
-token_frame = tk.Frame(root, bg="#2a2f46", bd=0)
-token_frame.pack(fill="both", expand=True, pady=20)
-
-# Add a styled progress bar
-progress_bar = Progressbar(root, orient="horizontal", length=800, mode="determinate", style="TProgressbar")
-progress_bar.pack(pady=20)
-
-# Create buttons for Refresh and Pause
-button_frame = tk.Frame(root, bg="#1e213a")
-button_frame.pack(pady=10)
-
-refresh_button = tk.Button(button_frame, text="Refresh Tokens", font=("Helvetica", 16), bg="#fca311", fg="#ffffff", command=refresh_token_list_thread)
-refresh_button.grid(row=0, column=0, padx=10)
-
-pause_button = tk.Button(button_frame, text="Pause", font=("Helvetica", 16), bg="#fca311", fg="#ffffff", command=toggle_pause)
-pause_button.grid(row=0, column=1, padx=10)
-
-# Initially load the token list in a background thread
-refresh_token_list_thread()
-
-# Run the GUI main loop
-root.mainloop()
+# ✅ Footer with social media links
+st.markdown("""
+    <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: white !important; background-color: black;">
+        <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
+        <a href="https://x.com/nexgonic" target="_blank">
+            <i class="fab fa-twitter" style="font-size: 30px; color: white;"></i>
+        </a>
+        <a href="https://t.me/Nexgonic" target="_blank">
+            <i class="fab fa-telegram" style="font-size: 30px; color: white;"></i>
+        </a>
+    </footer>
+""", unsafe_allow_html=True)
