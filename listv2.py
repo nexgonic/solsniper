@@ -17,12 +17,15 @@ if "authenticated" not in st.session_state:
 if not st.session_state.authenticated:
     st.title("🔒 Access Restricted")
     password = st.text_input("Enter Password", type="password")
-    if password == PASSWORD:
-        st.session_state.authenticated = True
-        st.experimental_rerun()  # Ensures UI updates when the password is entered correctly
-    else:
-        st.warning("Incorrect password. Try again.")
-    st.stop()  # Stop execution until the correct password is entered
+    if st.button("Login"):
+        if password == PASSWORD:
+            st.session_state.authenticated = True  # Store authentication status
+            st.success("✅ Access granted! Welcome to Soleth Ai Sniper v1 BETA")
+            st.experimental_set_query_params(authenticated="true")  # Store state without rerunning
+        else:
+            st.warning("❌ Incorrect password. Try again.")
+
+    st.stop()  # Prevents the rest of the app from running until authenticated
 
 # ✅ If the password is correct, the app UI is displayed
 st.success("✅ Access granted! Welcome to Soleth Ai Sniper v1 BETA")
