@@ -1,9 +1,8 @@
 import sys
 import webbrowser
 import requests
-import tkinter as tk
-from tkinter import scrolledtext
-from PIL import Image, ImageTk  # Import Pillow for image handling
+import streamlit as st
+from PIL import Image
 import threading
 import time
 from io import BytesIO
@@ -33,12 +32,12 @@ SOLID_LINE = "█" * 150
 
 def append_to_log(message: str, extra_newline: bool = True) -> None:
     """
-    Appends plain text to the end of the scrolledtext widget with optional extra spacing.
-    For normal status messages or token output.
+    Appends plain text to the log with optional extra spacing.
     """
-    text = f"{message}\n\n" if extra_newline else f"{message}\n"
-    log_text.insert(tk.END, text)
-    log_text.see(tk.END)
+    if extra_newline:
+        st.text_area("Logs", value=f"{message}\n\n", height=300, max_chars=None, key="log_area", disabled=True)
+    else:
+        st.text_area("Logs", value=f"{message}\n", height=300, max_chars=None, key="log_area", disabled=True)
 
 
 ################################################################################
@@ -51,25 +50,14 @@ hyperlink_id = 0
 
 def add_hyperlink(url: str, display_text: str) -> None:
     """
-    Inserts 'display_text' as a clickable link in the scrolledtext widget
-    which, when clicked, opens 'url' in the default web browser.
+    Inserts 'display_text' as a clickable link in the log which, when clicked, opens 'url' in the default web browser.
     """
     global hyperlink_id
 
     tag_name = f"hyper-{hyperlink_id}"
     hyperlink_id += 1
 
-    log_text.insert(tk.END, display_text, (tag_name,))
-    log_text.insert(tk.END, "\n")  # new line after link
-
-    hyperlinks_map[tag_name] = url
-
-    def click_callback(event, tag=tag_name):
-        link_url = hyperlinks_map[tag]
-        webbrowser.open(link_url)
-
-    log_text.tag_bind(tag_name, "<Button-1>", click_callback)
-    log_text.tag_config(tag_name, foreground="#1E90FF", underline=True)
+    st.markdown(f"[{display_text}]({url})")
 
 
 ################################################################################
@@ -114,7 +102,7 @@ def get_token_data() -> list:
 
 def display_token(token: dict, index: int):
     """
-    Inserts token info into the scrolledtext widget in the order:
+    Inserts token info into the display area in the order:
       1) token name (bold)
       2) price (above market cap)
       3) market cap
@@ -128,7 +116,7 @@ def display_token(token: dict, index: int):
     Then inserts the black line.
     """
     # Number the tokens in order
-    log_text.insert(tk.END, f"Token #{index}\n", "bold_title")
+    st.markdown(f"### Token #{index}")
 
     # Displaying the icon as an image
     icon_url = token.get("icon", "")
@@ -138,20 +126,15 @@ def display_token(token: dict, index: int):
             response = requests.get(icon_url)
             img_data = response.content
             img = Image.open(BytesIO(img_data))
-            img.thumbnail((100, 100))  # Resize the image to fit within a smaller space
-            img_tk = ImageTk.PhotoImage(img)
 
-            # Display the image in the Tkinter window
-            label_img = tk.Label(log_text, image=img_tk)
-            label_img.image = img_tk  # Keep a reference to the image
-            log_text.window_create(tk.END, window=label_img)  # Add the image to the text widget
-            log_text.insert(tk.END, "\n\n")
+            # Display the image in the Streamlit app
+            st.image(img, caption="Token Icon", use_column_width=True)
         except Exception as e:
             append_to_log(f"Error loading icon: {e}")
 
     # Price (above market cap)
     price = token.get("price", "N/A")
-    log_text.insert(tk.END, f"Price: {price}\n", "bold_label")
+    st.markdown(f"**Price**: {price}")
 
     # Token Metrics (Market Cap, Liquidity, 24 Hour Volume, and Holders)
     market_cap = token.get("marketCap", "N/A")
@@ -159,36 +142,32 @@ def display_token(token: dict, index: int):
     volume = token.get("volume", "N/A")
     holders = token.get("holders", "N/A")
 
-    log_text.insert(tk.END,
-                    f"Market Cap: {market_cap}\nLiquidity: {liquidity}\n24h Volume: {volume}\nHolders: {holders}\n\n",
-                    "bold_label")
+    st.markdown(f"**Market Cap**: {market_cap}")
+    st.markdown(f"**Liquidity**: {liquidity}")
+    st.markdown(f"**24h Volume**: {volume}")
+    st.markdown(f"**Holders**: {holders}")
 
     # Age (below holders)
     age = token.get("age", "N/A")
-    log_text.insert(tk.END, f"Age: {age}\n\n", "bold_label")
+    st.markdown(f"**Age**: {age}")
 
     # tokenAddress
-    log_text.insert(tk.END, f"tokenAddress:\n  {token['tokenAddress']}\n\n")
+    st.markdown(f"**tokenAddress**:\n  {token['tokenAddress']}")
 
     # URL as clickable link
-    log_text.insert(tk.END, "URL:\n", "bold_label")
     if token["url"] and token["url"] != "N/A":
         add_hyperlink(token["url"], token["url"])
     else:
-        log_text.insert(tk.END, "N/A\n\n")
+        st.markdown("**URL**: N/A")
 
     # links - Safely check if the key 'links' exists in the token
     links_list = token.get("links", [])
     if links_list:
-        log_text.insert(tk.END, "links:\n", "bold_label")
+        st.markdown("**Links**:")
         for link in links_list:
-            # Display only the URL and make it clickable
             add_hyperlink(link, link)
-            log_text.insert(tk.END, "\n")
     else:
-        log_text.insert(tk.END, "links:\n  None\n\n")
-
-    log_text.see(tk.END)
+        st.markdown("**Links**: None")
 
 
 ################################################################################
@@ -214,83 +193,21 @@ def background_search():
         append_to_log("No tokens found this round.")
 
 
-
 def fetch_process():
-    log_text.delete("1.0", tk.END)  # Clear the previous log text
-    log_text.yview_moveto(0)  # Ensure view starts from the top
     append_to_log("Fetching new token data...")
     background_search()
 
 
-def start_process():
-    fetch_button.config(state=tk.DISABLED)  # Disable the Fetch button while processing
-    fetch_process()
-    fetch_button.config(state=tk.NORMAL)  # Re-enable the Fetch button after processing
-
-
 def main():
-    try:
-        root.mainloop()
-    except KeyboardInterrupt:
-        print("Script interrupted by user (KeyboardInterrupt). Exiting gracefully...")
-        sys.exit(0)
+    st.title("Web 3.0 Dexscreener Tokens")
+    st.subheader("Prolif SOL Sniper v1")
 
+    st.sidebar.header("Controls")
+    fetch_button = st.sidebar.button("Fetch Tokens")
 
-################################################################################
-# MAIN UI SETUP
-################################################################################
+    if fetch_button:
+        fetch_process()
 
-root = tk.Tk()
-root.title("Web 3.0 Dexscreener Tokens")
-
-# Set window size and position
-root.geometry("950x700")
-root.config(bg="#1f1f1f")
-
-# Create a container frame with a sleek shadow effect and rounded corners
-frame = tk.Frame(root, bg="#2b2b2b", bd=15, relief="solid", borderwidth=2, highlightthickness=0)
-frame.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
-
-# Add a top header label
-header_label = tk.Label(frame, text="Prolif SOL Sniper v1", font=("Helvetica", 18, "bold"), fg="#1E90FF", bg="#2b2b2b")
-header_label.pack(pady=20)
-
-# Button Frame for controls
-button_frame = tk.Frame(frame, bg="#2b2b2b")
-button_frame.pack(pady=20)
-
-fetch_button = tk.Button(button_frame, text="Fetch", width=15, height=2, command=start_process,
-                         bg="#1E90FF", fg="white", font=("Arial", 12, "bold"), relief="raised", bd=2)
-fetch_button.pack(side=tk.LEFT, padx=(0, 20))
-
-# Create a ScrolledText widget with a modern dark theme
-log_text = scrolledtext.ScrolledText(frame, wrap=tk.WORD, bg="#1e1e1e", fg="white", font=("Arial", 12),
-                                     insertbackground="white", height=15, bd=0, highlightthickness=0)
-log_text.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
-
-# Configure text tags for bold
-log_text.tag_config("bold_title", font=("Arial", 12, "bold", "underline"), foreground="#1E90FF")
-log_text.tag_config("bold_label", font=("Arial", 12, "bold"), foreground="#66c2ff")
-log_text.tag_config("bold_desc", font=("Arial", 12, "bold"))
-
-# Create a Frame to hold the filter header and description text
-filter_frame = tk.Frame(frame, bg="#2b2b2b")
-filter_frame.pack(pady=(0, 20))
-
-# Label to display the current filter settings
-filter_label = tk.Label(filter_frame, text="Current Filters: Market Cap < 5M, Holders < 2000, Age < 2 hours",
-                        font=("Arial", 12), fg="white", bg="#2b2b2b")
-filter_label.pack()
-
-# Small text for the recommended settings note
-recommendation_label = tk.Label(filter_frame, text="Recommended Settings. Ability to change settings coming in v2.",
-                                font=("Arial", 10), fg="grey", bg="#2b2b2b")
-recommendation_label.pack(pady=(5, 0))
-
-# Adjusting the button frame positioning to ensure it's below the filter frame
-button_frame.pack(pady=20)
-
-running = False
 
 if __name__ == "__main__":
     main()
