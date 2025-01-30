@@ -1,8 +1,9 @@
 import requests
-import streamlit as st
 import webbrowser
+import streamlit as st
 from PIL import Image
 from io import BytesIO
+import os
 
 # Define the API URL and headers for the request
 API_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
@@ -14,6 +15,22 @@ HEADERS = {
         "Chrome/58.0.3029.110 Safari/537.36"
     )
 }
+
+# File for storing the view count
+VIEW_COUNT_FILE = "view_count.txt"
+
+def get_view_count():
+    if os.path.exists(VIEW_COUNT_FILE):
+        with open(VIEW_COUNT_FILE, "r") as f:
+            count = int(f.read())
+    else:
+        count = 0
+    return count
+
+def increment_view_count():
+    count = get_view_count() + 1
+    with open(VIEW_COUNT_FILE, "w") as f:
+        f.write(str(count))
 
 def get_token_data() -> list:
     try:
@@ -90,11 +107,25 @@ def refresh_token_list():
     else:
         update_token_display(token_data)
 
+# Track active users using session_state
+if "user_count" not in st.session_state:
+    st.session_state["user_count"] = 1
+else:
+    st.session_state["user_count"] += 1
+
 # Create the Streamlit app layout
 st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
 
 st.title("Top Tokens on Solana and Ethereum")
 st.write("Refreshing token list...")
+
+# Show live user count and visit count
+st.sidebar.markdown("### Live Metrics")
+st.sidebar.write(f"**Live Users**: {st.session_state['user_count']}")
+st.sidebar.write(f"**Total Visits**: {get_view_count()}")
+
+# Increment view count each time a user visits
+increment_view_count()
 
 # Add a refresh button
 refresh_button_clicked = st.button("Refresh Tokens")
