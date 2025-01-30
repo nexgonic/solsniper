@@ -16,22 +16,6 @@ HEADERS = {
     )
 }
 
-# File for storing the view count
-VIEW_COUNT_FILE = "view_count.txt"
-
-def get_view_count():
-    if os.path.exists(VIEW_COUNT_FILE):
-        with open(VIEW_COUNT_FILE, "r") as f:
-            count = int(f.read())
-    else:
-        count = 21  # Start total visits at 21 if the file doesn't exist
-    return count
-
-def increment_view_count():
-    count = get_view_count() + 1
-    with open(VIEW_COUNT_FILE, "w") as f:
-        f.write(str(count))
-
 def get_token_data() -> list:
     try:
         response = requests.get(API_URL, headers=HEADERS)
@@ -57,6 +41,9 @@ def update_token_display(token_data):
     progress_bar = st.progress(0)  # Initialize the progress bar
 
     for idx, token in enumerate(token_data):
+        # Retrieve token name (check how it's structured in the response)
+        token_name = token.get('name', 'No Name Available')
+
         # Construct the correct "More Info" URL based on the token's chain_id
         if token.get('chain_id') == 'solana':
             more_info_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
@@ -69,7 +56,7 @@ def update_token_display(token_data):
             chart_url = None  # Fallback for unsupported chains
 
         # Show token details
-        st.write(f"**{token.get('name', 'No Name Available')}**")
+        st.write(f"**{token_name}**")  # Display the token name
         st.write(f"Token Address: {token.get('tokenAddress', 'No Address Available')}")
         st.write(f"Liquidity: {token.get('liquidity', 'N/A')}")
         st.write(f"Volume: {token.get('volume', 'N/A')}")
@@ -113,8 +100,9 @@ def refresh_token_list(chain_filter=None):
         update_token_display(token_data)
 
 # Create the Streamlit app layout
-st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
+st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
 
+# Updated Title and Message
 st.title("Soleth Ai Sniper v1 BETA")
 st.write("Looking for the next 10x...")
 
@@ -145,7 +133,7 @@ if not refresh_button_clicked:
 st.markdown("""
     <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: black !important;">
         <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
-        <a href="https://twitter.com/nexgonic" target="_blank">
+        <a href="https://x.com/nexgonic" target="_blank">
             <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2021.svg" width="30" height="30" alt="Twitter">
         </a>
         <a href="https://t.me/Nexgonic" target="_blank">
