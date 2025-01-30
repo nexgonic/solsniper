@@ -122,16 +122,18 @@ def update_token_display(token_data):
             more_info_url = None  # Handle other chains if needed, set to None as fallback
             chart_url = None  # Fallback for unsupported chains
 
-        # Create unique button keys
+        # Create unique button keys for each token to isolate the button actions
         info_button_key = f"info_button_{idx}"
         chart_button_key = f"chart_button_{idx}"
 
         # Buttons for More Info and View Chart
-        if st.button("More Info", key=info_button_key) and more_info_url:
-            webbrowser.open(more_info_url)
+        if st.button("More Info", key=info_button_key):
+            if more_info_url:
+                webbrowser.open(more_info_url)
 
-        if st.button("View Chart", key=chart_button_key) and chart_url:
-            webbrowser.open(chart_url)
+        if st.button("View Chart", key=chart_button_key):
+            if chart_url:
+                webbrowser.open(chart_url)
 
         progress_bar.progress((idx + 1) / total_tokens)  # Update progress bar
 
