@@ -50,6 +50,11 @@ def get_token_data() -> list:
         print(f"Error fetching data: {e}")
         return []
 
+def calculate_percentage_change(current_price, price_1_hour_ago):
+    if price_1_hour_ago == 0:
+        return 0
+    return ((current_price - price_1_hour_ago) / price_1_hour_ago) * 100
+
 def update_token_display(token_data):
     st.subheader(f"Displaying {len(token_data)} tokens...")
 
@@ -57,16 +62,16 @@ def update_token_display(token_data):
     progress_bar = st.progress(0)  # Initialize the progress bar
 
     for idx, token in enumerate(token_data):
-        # Construct the correct "More Info" URL based on the token's chain
-        if token.get('chain') == 'solana':
-            more_info_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
-            chart_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
-        elif token.get('chain') == 'ethereum':
-            more_info_url = f"https://coinmarketcap.com/dexscan/ethereum/{token.get('tokenAddress')}"
-            chart_url = f"https://dexscreener.com/ethereum/{token.get('tokenAddress')}"
+        # Assuming the data includes price and price_1_hour_ago
+        current_price = token.get('price', 0)
+        price_1_hour_ago = token.get('price_1_hour_ago', 0)
+
+        # Calculate the percentage change
+        if current_price and price_1_hour_ago:
+            percentage_change = calculate_percentage_change(current_price, price_1_hour_ago)
+            token['percentage_change'] = percentage_change
         else:
-            more_info_url = None  # Handle other chains if needed, set to None as fallback
-            chart_url = None  # Fallback for unsupported chains
+            token['percentage_change'] = 0  # If we don't have price data, set change to 0
 
         # Show token details
         st.write(f"**{token.get('name', 'No Name Available')}**")
@@ -74,6 +79,7 @@ def update_token_display(token_data):
         st.write(f"Liquidity: {token.get('liquidity', 'N/A')}")
         st.write(f"Volume: {token.get('volume', 'N/A')}")
         st.write(f"Holders: {token.get('holders', 'N/A')}")
+        st.write(f"**1 Hour Change**: {token['percentage_change']:.2f}%")
         
         # Show icon if available
         icon_url = token.get('icon', '')
@@ -99,6 +105,15 @@ def update_token_display(token_data):
 
         progress_bar.progress((idx + 1) / total_tokens)  # Update progress bar
 
+def show_top_gaining_tokens(token_data):
+    # Sort the tokens by percentage change in descending order
+    top_tokens = sorted(token_data, key=lambda x: x.get('percentage_change', 0), reverse=True)[:5]
+    
+    # Display the top 5 gaining tokens
+    st.sidebar.subheader("Top 5 Gaining Tokens (Last 1 Hour)")
+    for idx, token in enumerate(top_tokens):
+        st.sidebar.write(f"{idx + 1}. {token['name']} - {token['percentage_change']:.2f}%")
+
 def refresh_token_list():
     token_data = get_token_data()
 
@@ -106,6 +121,7 @@ def refresh_token_list():
         st.write("No token data found.")
     else:
         update_token_display(token_data)
+        show_top_gaining_tokens(token_data)
 
 # Track active users using session_state
 if "user_count" not in st.session_state:
