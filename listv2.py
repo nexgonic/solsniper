@@ -28,31 +28,45 @@ def increment_view_count():
 
 # Function to scrape data for top gaining tokens
 def scrape_top_gaining_tokens():
-    # Fetch the CoinMarketCap DexScan page (Ethereum and Solana)
-    response = requests.get(ETHEREUM_DEXSCAN_URL)
-    soup = BeautifulSoup(response.content, 'html.parser')
+    try:
+        # Fetch the CoinMarketCap DexScan page (Ethereum and Solana)
+        response = requests.get(ETHEREUM_DEXSCAN_URL)
+        soup = BeautifulSoup(response.content, 'html.parser')
 
-    # Find the table that contains the token data
-    table = soup.find('table', {'class': 'cmc-table'})
-    rows = table.find_all('tr')[1:]  # Skip header row
+        # Find the table that contains the token data
+        table = soup.find('table', {'class': 'cmc-table'})
+        
+        # If the table isn't found, handle it gracefully
+        if table is None:
+            st.error("Failed to find the table with token data.")
+            return []
 
-    tokens = []
-    for row in rows:
-        columns = row.find_all('td')
-        if len(columns) > 3:
-            token_name = columns[1].get_text(strip=True)
-            percentage_change_1h = columns[3].get_text(strip=True)
-            
-            # Extract percentage change and ignore empty values
-            try:
-                percentage_change_1h = float(percentage_change_1h.replace('%', '').strip())
-                tokens.append((token_name, percentage_change_1h))
-            except ValueError:
-                continue
+        rows = table.find_all('tr')[1:]  # Skip header row
 
-    # Sort by percentage change and return the top 5
-    tokens_sorted = sorted(tokens, key=lambda x: x[1], reverse=True)[:5]
-    return tokens_sorted
+        tokens = []
+        for row in rows:
+            columns = row.find_all('td')
+            if len(columns) > 3:
+                token_name = columns[1].get_text(strip=True)
+                percentage_change_1h = columns[3].get_text(strip=True)
+
+                # Extract percentage change and ignore empty values
+                try:
+                    percentage_change_1h = float(percentage_change_1h.replace('%', '').strip())
+                    tokens.append((token_name, percentage_change_1h))
+                except ValueError:
+                    continue
+
+        # Sort by percentage change and return the top 5
+        tokens_sorted = sorted(tokens, key=lambda x: x[1], reverse=True)[:5]
+        return tokens_sorted
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error fetching data from CoinMarketCap: {e}")
+        return []
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
+        return []
 
 def get_token_data() -> list:
     try:
@@ -76,10 +90,13 @@ def update_token_display():
     # Get the top gaining tokens
     top_gaining_tokens = scrape_top_gaining_tokens()
     
-    # Display the top gaining tokens
-    st.sidebar.subheader("Top 5 Gaining Tokens (Last 1 Hour)")
-    for idx, (token_name, percentage_change) in enumerate(top_gaining_tokens):
-        st.sidebar.write(f"{idx + 1}. {token_name} - {percentage_change:.2f}%")
+    if top_gaining_tokens:
+        # Display the top gaining tokens
+        st.sidebar.subheader("Top 5 Gaining Tokens (Last 1 Hour)")
+        for idx, (token_name, percentage_change) in enumerate(top_gaining_tokens):
+            st.sidebar.write(f"{idx + 1}. {token_name} - {percentage_change:.2f}%")
+    else:
+        st.sidebar.write("No top gaining tokens to display.")
 
 # Streamlit App Layout
 st.set_page_config(page_title="Top Gaining Tokens - CoinMarketCap DexScan", layout="wide")
