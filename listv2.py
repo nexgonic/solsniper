@@ -5,6 +5,9 @@ from PIL import Image
 from io import BytesIO
 import os
 
+# Set page config first
+st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
+
 # Define the API URL and headers for the request
 API_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
 FETCH_INTERVAL = 10  # Interval (in seconds) between consecutive fetches
@@ -108,9 +111,6 @@ def refresh_token_list(chain_filter=None):
             token_data = [token for token in token_data if token.get('chain_id', '').lower() == chain_filter.lower()]
         
         update_token_display(token_data)
-
-# Create the Streamlit app layout
-st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
 
 # Add logo above header (Centered) with new logo source URL
 st.markdown("""
