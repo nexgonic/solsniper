@@ -133,9 +133,9 @@ if refresh_button_clicked:
 if not refresh_button_clicked:
     refresh_token_list(chain_filter)
 
-# Footer with copyright and social media links (Text color set to black and bold)
+# Footer with copyright and social media links (Text color set to white, bold)
 st.markdown("""
-    <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: black !important;">
+    <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: white !important; background-color: black;">
         <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
         <a href="https://x.com/nexgonic" target="_blank">
             <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2021.svg" width="30" height="30" alt="Twitter">
