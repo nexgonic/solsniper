@@ -3,9 +3,27 @@ import webbrowser
 import streamlit as st
 from PIL import Image
 from io import BytesIO
+import base64
 
 # Set page config first, before any other Streamlit commands
 st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
+
+# Password protection (User must enter "early" to access)
+def check_password():
+    """Function to handle password authentication."""
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        password = st.text_input("Enter Password", type="password")
+        if password == "early":
+            st.session_state.authenticated = True
+            st.experimental_rerun()
+        else:
+            st.warning("Incorrect password. Try again.")
+            st.stop()
+
+check_password()  # Call the password check function
 
 # Define the API URL and headers for the request
 API_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
@@ -28,101 +46,31 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Embed Font Awesome for social media icons
-st.markdown("""
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-""", unsafe_allow_html=True)
-
-def get_token_data() -> list:
-    try:
-        response = requests.get(API_URL, headers=HEADERS)
-        response.raise_for_status()
-
-        data = response.json()
-        if isinstance(data, dict) and "tokens" in data:
-            tokens = data["tokens"]
-        elif isinstance(data, list):
-            tokens = data
-        else:
-            return []  # If the response isn't as expected
-
-        return tokens  # Return all tokens, no limit
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data: {e}")
-        return []
-
-def update_token_display(token_data):
-    st.subheader(f"Displaying {len(token_data)} tokens...")
-
-    total_tokens = len(token_data)
-    progress_bar = st.progress(0)  # Initialize the progress bar
-
-    for idx, token in enumerate(token_data):
-        # Retrieve token name (check how it's structured in the response)
-        token_name = token.get('name', 'No Name Available')
-
-        # Construct the correct "More Info" URL based on the token's chain_id
-        if token.get('chain_id') == 'solana':
-            more_info_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
-            chart_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
-        elif token.get('chain_id') == 'ethereum':
-            more_info_url = f"https://coinmarketcap.com/dexscan/ethereum/{token.get('tokenAddress')}"
-            chart_url = f"https://dexscreener.com/ethereum/{token.get('tokenAddress')}"
-        else:
-            more_info_url = None  # Handle other chains if needed, set to None as fallback
-            chart_url = None  # Fallback for unsupported chains
-
-        # Show token details
-        st.write(f"**{token_name}**")  # Display the token name
-        st.write(f"Token Address: {token.get('tokenAddress', 'No Address Available')}")
-        st.write(f"Liquidity: {token.get('liquidity', 'N/A')}")
-        st.write(f"Volume: {token.get('volume', 'N/A')}")
-        st.write(f"Holders: {token.get('holders', 'N/A')}")
-        
-        # Show icon if available
-        icon_url = token.get('icon', '')
-        if icon_url:
-            response = requests.get(icon_url)
-            img_data = Image.open(BytesIO(response.content))
-            img_data = img_data.resize((50, 50))
-            st.image(img_data)
-
-        # Display token address
-        token_address = token.get('tokenAddress', 'No Address Available')
-        st.text_input("Token Address", value=token_address, key=f"token_address_{idx}")
-
-        # Buttons for More Info and View Chart
-        more_info_button = st.button("More Info", key=f"info_button_{idx}")
-        view_chart_button = st.button("View Chart", key=f"chart_button_{idx}")
-
-        if more_info_button and more_info_url:
-            webbrowser.open(more_info_url)
-
-        if view_chart_button and chart_url:
-            webbrowser.open(chart_url)
-
-        progress_bar.progress((idx + 1) / total_tokens)  # Update progress bar
-
-def refresh_token_list(chain_filter=None):
-    token_data = get_token_data()
-
-    if not token_data:
-        st.write("No token data found.")
-    else:
-        # Apply chain filter if specified
-        if chain_filter:
-            # Ensure that the filtering correctly matches chain_id values (case sensitive)
-            token_data = [token for token in token_data if token.get('chain_id', '').lower() == chain_filter.lower()]
-        
-        update_token_display(token_data)
-
-# Fetch image dynamically and get actual dimensions
+# Fetch image dynamically and make it full-width
 logo_url = "https://nextgenspeed.com/wp-content/uploads/2025/01/bannerlogo.png"
 response = requests.get(logo_url)
+
 if response.status_code == 200:
     img = Image.open(BytesIO(response.content))
-    width, height = img.size  # Get actual dimensions
-    st.image(img, caption="Soleth Ai Sniper Logo", width=width)
+    img_buffer = BytesIO()
+    img.save(img_buffer, format="PNG")
+    img_base64 = base64.b64encode(img_buffer.getvalue()).decode()
+
+    # Display full-width responsive image
+    st.markdown(f"""
+        <style>
+            .full-width-img {{
+                width: 100%;
+                height: auto;
+                display: block;
+                margin: 0 auto;
+                max-width: 100%;
+            }}
+        </style>
+        <div style="text-align: center;">
+            <img class="full-width-img" src="data:image/png;base64,{img_base64}" alt="Soleth Ai Sniper Logo">
+        </div>
+    """, unsafe_allow_html=True)
 
 # Updated Title and Message
 st.title("Soleth Ai Sniper v1 BETA")
@@ -141,14 +89,87 @@ else:
 
 # Add a refresh button
 refresh_button_clicked = st.button("Refresh Tokens")
+
+def get_token_data() -> list:
+    try:
+        response = requests.get(API_URL, headers=HEADERS)
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, dict) and "tokens" in data:
+            tokens = data["tokens"]
+        elif isinstance(data, list):
+            tokens = data
+        else:
+            return []  # If the response isn't as expected
+        return tokens  # Return all tokens, no limit
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data: {e}")
+        return []
+
+def update_token_display(token_data):
+    st.subheader(f"Displaying {len(token_data)} tokens...")
+
+    total_tokens = len(token_data)
+    progress_bar = st.progress(0)  # Initialize the progress bar
+
+    for idx, token in enumerate(token_data):
+        token_name = token.get('name', 'No Name Available')
+
+        if token.get('chain_id') == 'solana':
+            more_info_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
+            chart_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
+        elif token.get('chain_id') == 'ethereum':
+            more_info_url = f"https://coinmarketcap.com/dexscan/ethereum/{token.get('tokenAddress')}"
+            chart_url = f"https://dexscreener.com/ethereum/{token.get('tokenAddress')}"
+        else:
+            more_info_url = None  
+            chart_url = None  
+
+        st.write(f"**{token_name}**")  
+        st.write(f"Token Address: {token.get('tokenAddress', 'No Address Available')}")
+        st.write(f"Liquidity: {token.get('liquidity', 'N/A')}")
+        st.write(f"Volume: {token.get('volume', 'N/A')}")
+        st.write(f"Holders: {token.get('holders', 'N/A')}")
+
+        icon_url = token.get('icon', '')
+        if icon_url:
+            response = requests.get(icon_url)
+            img_data = Image.open(BytesIO(response.content))
+            img_data = img_data.resize((50, 50))
+            st.image(img_data)
+
+        token_address = token.get('tokenAddress', 'No Address Available')
+        st.text_input("Token Address", value=token_address, key=f"token_address_{idx}")
+
+        more_info_button = st.button("More Info", key=f"info_button_{idx}")
+        view_chart_button = st.button("View Chart", key=f"chart_button_{idx}")
+
+        if more_info_button and more_info_url:
+            webbrowser.open(more_info_url)
+
+        if view_chart_button and chart_url:
+            webbrowser.open(chart_url)
+
+        progress_bar.progress((idx + 1) / total_tokens) 
+
+def refresh_token_list(chain_filter=None):
+    token_data = get_token_data()
+
+    if not token_data:
+        st.write("No token data found.")
+    else:
+        if chain_filter:
+            token_data = [token for token in token_data if token.get('chain_id', '').lower() == chain_filter.lower()]
+        
+        update_token_display(token_data)
+
 if refresh_button_clicked:
     refresh_token_list(chain_filter)
 
-# Initially load the token list
 if not refresh_button_clicked:
     refresh_token_list(chain_filter)
 
-# Footer with copyright and social media links (Text color set to white, bold, and black background)
+# Footer with copyright and social media links
 st.markdown("""
     <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: white !important; background-color: black;">
         <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
@@ -159,19 +180,4 @@ st.markdown("""
             <i class="fab fa-telegram" style="font-size: 30px; color: white;"></i>
         </a>
     </footer>
-""", unsafe_allow_html=True)
-
-# Sticky bottom bar with black background and social media icons next to the text
-st.markdown("""
-    <div style="position: fixed; bottom: 0; left: 0; width: 100%; background-color: black; 
-    text-align: center; padding: 10px; font-size: 14px; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); color: white;">
-        <p style="margin: 0;">Let us know what you think and features you would like to see.
-        <a href="https://x.com/nexgonic" target="_blank">
-            <i class="fab fa-twitter" style="font-size: 30px; color: white;"></i>
-        </a>
-        <a href="https://t.me/Nexgonic" target="_blank">
-            <i class="fab fa-telegram" style="font-size: 30px; color: white;"></i>
-        </a>
-        </p>
-    </div>
 """, unsafe_allow_html=True)
