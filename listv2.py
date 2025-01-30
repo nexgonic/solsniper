@@ -37,7 +37,9 @@ if response.status_code == 200:
                 display: inline-block;
             }}
         </style>
-      
+        <div class="auth-logo-container">
+            <img class="auth-logo" src="data:image/png;base64,{img_base64}" alt="Soleth Ai Sniper Logo">
+        </div>
     """, unsafe_allow_html=True)
 
 if not st.session_state.authenticated:
@@ -73,82 +75,6 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# ✅ API Configuration
-API_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/58.0.3029.110 Safari/537.36"
-    )
-}
-
-# ✅ Function to fetch token data
-def get_token_data(chain_filter=None) -> list:
-    try:
-        response = requests.get(API_URL, headers=HEADERS)
-        response.raise_for_status()
-        data = response.json()
-
-        # Extract token list
-        if isinstance(data, dict) and "tokens" in data:
-            tokens = data["tokens"]
-        elif isinstance(data, list):
-            tokens = data
-        else:
-            return []
-
-        # ✅ Filter tokens by chain
-        if chain_filter:
-            tokens = [token for token in tokens if token.get("chainId", "").lower() == chain_filter.lower()]
-
-        return tokens
-    except requests.exceptions.RequestException as e:
-        st.error(f"❌ Error fetching data: {e}")
-        return []
-
-# ✅ Function to display tokens
-def update_token_display(token_data):
-    st.subheader(f"Displaying {len(token_data)} tokens...")
-
-    if len(token_data) == 0:
-        st.warning("⚠️ No tokens found for the selected chain.")
-
-    total_tokens = len(token_data)
-    progress_bar = st.progress(0)  # Initialize the progress bar
-
-    for idx, token in enumerate(token_data):
-        token_name = token.get('name', 'No Name Available')
-
-        # Construct the correct "More Info" URL based on the token's chain_id
-        if token.get('chainId') == 'solana':
-            more_info_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
-            chart_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
-        elif token.get('chainId') == 'ethereum':
-            more_info_url = f"https://coinmarketcap.com/dexscan/ethereum/{token.get('tokenAddress')}"
-            chart_url = f"https://dexscreener.com/ethereum/{token.get('tokenAddress')}"
-        else:
-            more_info_url = None  
-            chart_url = None  
-
-        st.write(f"**{token_name}**")  
-        st.write(f"Token Address: {token.get('tokenAddress', 'No Address Available')}")
-        st.write(f"Liquidity: {token.get('liquidity', 'N/A')}")
-        st.write(f"Volume: {token.get('volume', 'N/A')}")
-        st.write(f"Holders: {token.get('holders', 'N/A')}")
-
-        icon_url = token.get('icon', '')
-        if icon_url:
-            response = requests.get(icon_url)
-            img_data = Image.open(BytesIO(response.content))
-            img_data = img_data.resize((50, 50))
-            st.image(img_data)
-
-        token_address = token.get('tokenAddress', 'No Address Available')
-        st.text_input("Token Address", value=token_address, key=f"token_address_{idx}")
-
-        progress_bar.progress((idx + 1) / total_tokens) 
-
 # ✅ Sidebar Filter option for selecting chain
 chain_filter = st.sidebar.radio("Select Chain", ("All Chains", "Solana", "Ethereum"))
 
@@ -169,6 +95,36 @@ if refresh_button_clicked:
 else:
     refresh_token_list = get_token_data(chain_filter)
     update_token_display(refresh_token_list)  # Load tokens initially
+
+# ✅ Feedback Button (Opens Twitter with pre-filled tweet)
+tweet_text = "I'm using Soleth Ai Sniper and have feedback! 🚀 @nexgonic"
+tweet_url = f"https://twitter.com/intent/tweet?text={tweet_text}"
+
+st.markdown("""
+    <style>
+        .feedback-button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .feedback-button {
+            background-color: #1DA1F2;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-block;
+            text-decoration: none;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+st.markdown(f"""
+    <div class="feedback-button-container">
+        <a href="{tweet_url}" target="_blank" class="feedback-button">📝 Give Feedback on Twitter</a>
+    </div>
+""", unsafe_allow_html=True)
 
 # ✅ Footer with social media links
 st.markdown("""
