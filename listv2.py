@@ -57,11 +57,11 @@ def update_token_display(token_data):
     progress_bar = st.progress(0)  # Initialize the progress bar
 
     for idx, token in enumerate(token_data):
-        # Construct the correct "More Info" URL based on the token's chain
-        if token.get('chain') == 'solana':
+        # Construct the correct "More Info" URL based on the token's chain_id
+        if token.get('chain_id') == 'solana':
             more_info_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
             chart_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
-        elif token.get('chain') == 'ethereum':
+        elif token.get('chain_id') == 'ethereum':
             more_info_url = f"https://coinmarketcap.com/dexscan/ethereum/{token.get('tokenAddress')}"
             chart_url = f"https://dexscreener.com/ethereum/{token.get('tokenAddress')}"
         else:
@@ -107,7 +107,8 @@ def refresh_token_list(chain_filter=None):
     else:
         # Apply chain filter if specified
         if chain_filter:
-            token_data = [token for token in token_data if token.get('chain') == chain_filter]
+            # Ensure that the filtering correctly matches chain_id values (case sensitive)
+            token_data = [token for token in token_data if token.get('chain_id', '').lower() == chain_filter.lower()]
         
         update_token_display(token_data)
 
