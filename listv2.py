@@ -24,7 +24,7 @@ def get_view_count():
         with open(VIEW_COUNT_FILE, "r") as f:
             count = int(f.read())
     else:
-        count = 0
+        count = 21  # Start total visits at 21 if the file doesn't exist
     return count
 
 def increment_view_count():
@@ -108,10 +108,16 @@ def refresh_token_list():
         update_token_display(token_data)
 
 # Track active users using session_state
+if "user_ips" not in st.session_state:
+    st.session_state["user_ips"] = set()  # Store unique IPs
 if "user_count" not in st.session_state:
-    st.session_state["user_count"] = 1
+    st.session_state["user_count"] = 1  # Start user count at 1 (for the first user)
 else:
-    st.session_state["user_count"] += 1
+    # Get the user's IP and track unique users
+    user_ip = st.request.remote_addr  # Fetch user IP
+    if user_ip not in st.session_state["user_ips"]:
+        st.session_state["user_ips"].add(user_ip)
+        st.session_state["user_count"] += 1
 
 # Create the Streamlit app layout
 st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
