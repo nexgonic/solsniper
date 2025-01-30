@@ -1,6 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 import streamlit as st
+import os  # Ensure os module is imported
+import webbrowser
+from PIL import Image
+from io import BytesIO
 
 # Define the CoinMarketCap DexScan URL
 ETHEREUM_DEXSCAN_URL = "https://coinmarketcap.com/dexscan/ethereum"
