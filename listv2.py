@@ -111,18 +111,6 @@ def refresh_token_list(chain_filter=None):
         
         update_token_display(token_data)
 
-# Track active users using session_state
-if "user_ids" not in st.session_state:
-    st.session_state["user_ids"] = set()  # Store unique session identifiers
-if "user_count" not in st.session_state:
-    st.session_state["user_count"] = 1  # Start user count at 1 (for the first user)
-else:
-    # Use session_id as unique identifier instead of IP
-    user_id = st.session_state.session_id
-    if user_id not in st.session_state["user_ids"]:
-        st.session_state["user_ids"].add(user_id)
-        st.session_state["user_count"] += 1
-
 # Create the Streamlit app layout
 st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
 
