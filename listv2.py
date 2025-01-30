@@ -100,11 +100,10 @@ def refresh_token_list(chain_filter=None):
         update_token_display(token_data)
 
 # Create the Streamlit app layout
-st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
+st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
 
-# Updated Title and Message
-st.title("Soleth Ai Sniper v1 BETA")
-st.write("Looking for the next 10x...")
+st.title("SOLETH Ai Sniper")
+st.write("Anaylazing the next 10x...")
 
 # Filter option for selecting chain
 chain_filter = st.sidebar.radio("Select Chain", ("All Chains", "Solana", "Ethereum"))
@@ -131,7 +130,7 @@ if not refresh_button_clicked:
 
 # Footer with copyright and social media links (Text color set to black and bold)
 st.markdown("""
-    <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: black !important;">
+    <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: black;">
         <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
         <a href="https://x.com/nexgonic" target="_blank">
             <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2021.svg" width="30" height="30" alt="Twitter">
