@@ -1,3 +1,6 @@
+# Set page config first
+st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
+
 import requests
 import webbrowser
 import streamlit as st
@@ -108,9 +111,6 @@ def refresh_token_list(chain_filter=None):
             token_data = [token for token in token_data if token.get('chain_id', '').lower() == chain_filter.lower()]
         
         update_token_display(token_data)
-
-# Create the Streamlit app layout
-st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
 
 # Add logo above header (Centered) with new logo source URL
 st.markdown("""
