@@ -1,5 +1,4 @@
 import requests
-import tkinter as tk
 from tkinter import messagebox
 from tkinter.ttk import Progressbar
 from PIL import Image, ImageTk
