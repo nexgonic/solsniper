@@ -16,6 +16,31 @@ HEADERS = {
     )
 }
 
+# File for storing the view count
+VIEW_COUNT_FILE = "view_count.txt"
+
+# Safe file handling to ensure the file exists
+def get_view_count():
+    # Check if the file exists before reading
+    if os.path.exists(VIEW_COUNT_FILE):
+        with open(VIEW_COUNT_FILE, "r") as f:
+            count = int(f.read())
+    else:
+        count = 21  # Start total visits at 21 if the file doesn't exist
+        # Create the file and write the initial count value
+        with open(VIEW_COUNT_FILE, "w") as f:
+            f.write(str(count))  
+    return count
+
+def increment_view_count():
+    try:
+        # Increment the view count safely
+        count = get_view_count() + 1
+        with open(VIEW_COUNT_FILE, "w") as f:
+            f.write(str(count))
+    except Exception as e:
+        st.error(f"Error incrementing view count: {e}")
+
 def get_token_data() -> list:
     try:
         response = requests.get(API_URL, headers=HEADERS)
