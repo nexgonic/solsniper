@@ -1,13 +1,20 @@
 import requests
-from bs4 import BeautifulSoup
-import streamlit as st
-import os  # Ensure os module is imported
 import webbrowser
+import streamlit as st
 from PIL import Image
 from io import BytesIO
+import os
 
-# Define the CoinMarketCap DexScan URL
-ETHEREUM_DEXSCAN_URL = "https://coinmarketcap.com/dexscan/ethereum"
+# Define the API URL and headers for the request
+API_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
+FETCH_INTERVAL = 10  # Interval (in seconds) between consecutive fetches
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/58.0.3029.110 Safari/537.36"
+    )
+}
 
 # File for storing the view count
 VIEW_COUNT_FILE = "view_count.txt"
@@ -25,66 +32,80 @@ def increment_view_count():
     with open(VIEW_COUNT_FILE, "w") as f:
         f.write(str(count))
 
-# Function to scrape data for top gaining tokens using requests and BeautifulSoup
-def scrape_top_gaining_tokens():
+def get_token_data() -> list:
     try:
-        # Fetch the CoinMarketCap DexScan page (Ethereum)
-        response = requests.get(ETHEREUM_DEXSCAN_URL)
-        soup = BeautifulSoup(response.content, 'html.parser')
+        response = requests.get(API_URL, headers=HEADERS)
+        response.raise_for_status()
 
-        # Find the table that contains the token data
-        table = soup.find('table', {'class': 'cmc-table'})
+        data = response.json()
+        if isinstance(data, dict) and "tokens" in data:
+            tokens = data["tokens"]
+        elif isinstance(data, list):
+            tokens = data
+        else:
+            return []  # If the response isn't as expected
 
-        if table is None:
-            st.error("Failed to find the table with token data.")
-            return []
-
-        rows = table.find_all('tr')[1:]  # Skip header row
-
-        tokens = []
-        for row in rows:
-            columns = row.find_all('td')
-            if len(columns) > 3:
-                token_name = columns[1].get_text(strip=True)
-                percentage_change_1h = columns[3].get_text(strip=True)
-
-                # Extract percentage change and ignore empty values
-                try:
-                    percentage_change_1h = float(percentage_change_1h.replace('%', '').strip())
-                    tokens.append((token_name, percentage_change_1h))
-                except ValueError:
-                    continue
-
-        # Sort by percentage change and return the top 5
-        tokens_sorted = sorted(tokens, key=lambda x: x[1], reverse=True)[:5]
-        return tokens_sorted
-
+        return tokens  # Return all tokens, no limit
     except requests.exceptions.RequestException as e:
-        st.error(f"Error fetching data from CoinMarketCap: {e}")
-        return []
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+        print(f"Error fetching data: {e}")
         return []
 
-def update_token_display():
-    # Get the top gaining tokens
-    top_gaining_tokens = scrape_top_gaining_tokens()
+def update_token_display(token_data):
+    st.subheader(f"Displaying {len(token_data)} tokens...")
 
-    if top_gaining_tokens:
-        # Display the top gaining tokens
-        st.sidebar.subheader("Top 5 Gaining Tokens (Last 1 Hour)")
-        for idx, (token_name, percentage_change) in enumerate(top_gaining_tokens):
-            st.sidebar.write(f"{idx + 1}. {token_name} - {percentage_change:.2f}%")
+    total_tokens = len(token_data)
+    progress_bar = st.progress(0)  # Initialize the progress bar
+
+    for idx, token in enumerate(token_data):
+        # Construct the correct "More Info" URL based on the token's chain
+        if token.get('chain') == 'solana':
+            more_info_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
+            chart_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
+        elif token.get('chain') == 'ethereum':
+            more_info_url = f"https://coinmarketcap.com/dexscan/ethereum/{token.get('tokenAddress')}"
+            chart_url = f"https://dexscreener.com/ethereum/{token.get('tokenAddress')}"
+        else:
+            more_info_url = None  # Handle other chains if needed, set to None as fallback
+            chart_url = None  # Fallback for unsupported chains
+
+        # Show token details
+        st.write(f"**{token.get('name', 'No Name Available')}**")
+        st.write(f"Token Address: {token.get('tokenAddress', 'No Address Available')}")
+        st.write(f"Liquidity: {token.get('liquidity', 'N/A')}")
+        st.write(f"Volume: {token.get('volume', 'N/A')}")
+        st.write(f"Holders: {token.get('holders', 'N/A')}")
+        
+        # Show icon if available
+        icon_url = token.get('icon', '')
+        if icon_url:
+            response = requests.get(icon_url)
+            img_data = Image.open(BytesIO(response.content))
+            img_data = img_data.resize((50, 50))
+            st.image(img_data)
+
+        # Display token address
+        token_address = token.get('tokenAddress', 'No Address Available')
+        st.text_input("Token Address", value=token_address, key=f"token_address_{idx}")
+
+        # Buttons for More Info and View Chart
+        more_info_button = st.button("More Info", key=f"info_button_{idx}")
+        view_chart_button = st.button("View Chart", key=f"chart_button_{idx}")
+
+        if more_info_button and more_info_url:
+            webbrowser.open(more_info_url)
+
+        if view_chart_button and chart_url:
+            webbrowser.open(chart_url)
+
+        progress_bar.progress((idx + 1) / total_tokens)  # Update progress bar
+
+def refresh_token_list():
+    token_data = get_token_data()
+
+    if not token_data:
+        st.write("No token data found.")
     else:
-        st.sidebar.write("No top gaining tokens to display.")
-
-# Streamlit App Layout
-st.set_page_config(page_title="Top Gaining Tokens - CoinMarketCap DexScan", layout="wide")
-st.title("Live Top Gaining Tokens (Last 1 Hour)")
-
-# Show live user count and visit count
-st.sidebar.markdown("### Live Metrics")
-st.sidebar.write(f"**Live Users**: {st.session_state.get('user_count', 1)}")
+        update_token_display(token_data)
 
 # Track active users using session_state
 if "user_count" not in st.session_state:
@@ -92,15 +113,25 @@ if "user_count" not in st.session_state:
 else:
     st.session_state["user_count"] += 1
 
-# Display the top gaining tokens
-update_token_display()
+# Create the Streamlit app layout
+st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
 
-# Add a refresh button
-if st.button("Refresh Tokens"):
-    update_token_display()
+st.title("Top Tokens on Solana and Ethereum")
+st.write("Refreshing token list...")
 
-# Track visit count and update
+# Show live user count and visit count
+st.sidebar.markdown("### Live Metrics")
+st.sidebar.write(f"**Live Users**: {st.session_state['user_count']}")
+st.sidebar.write(f"**Total Visits**: {get_view_count()}")
+
+# Increment view count each time a user visits
 increment_view_count()
 
-# Display the visit count in the sidebar
-st.sidebar.write(f"**Total Visits**: {get_view_count()}")
+# Add a refresh button
+refresh_button_clicked = st.button("Refresh Tokens")
+if refresh_button_clicked:
+    refresh_token_list()
+
+# Initially load the token list
+if not refresh_button_clicked:
+    refresh_token_list()
