@@ -213,7 +213,7 @@ def fetch_process():
 
 
 def main():
-    st.title("Web 3.0 Dexscreener Tokens")
+    st.title("Nexgonic SOLETH Token Sniper")
     st.subheader("Prolif SOL Sniper v1")
 
     st.sidebar.header("Controls")
