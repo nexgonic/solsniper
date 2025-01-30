@@ -102,10 +102,10 @@ def refresh_token_list(chain_filter=None):
 # Create the Streamlit app layout
 st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
 
-# Add logo above header (Centered)
+# Add logo above header (Centered) with new logo source URL
 st.markdown("""
     <div style="text-align: center;">
-        <img src="https://pbs.twimg.com/profile_images/1884776660798517249/GXXVJ4Ar.jpg" width="200" height="200" alt="Soleth Ai Sniper Logo">
+        <img src="https://nextgenspeed.com/wp-content/uploads/2025/01/nexgonico_trans.png" width="200" height="200" alt="Soleth Ai Sniper Logo">
     </div>
 """, unsafe_allow_html=True)
 
