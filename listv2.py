@@ -1,42 +1,22 @@
 import requests
 from bs4 import BeautifulSoup
 import streamlit as st
-import webbrowser
-from PIL import Image
-from io import BytesIO
-import os
 
 # Define the CoinMarketCap DexScan URL
 ETHEREUM_DEXSCAN_URL = "https://coinmarketcap.com/dexscan/ethereum"
-SOLANA_DEXSCAN_URL = "https://coinmarketcap.com/dexscan/solana"
 
-# File for storing the view count
-VIEW_COUNT_FILE = "view_count.txt"
-
-def get_view_count():
-    if os.path.exists(VIEW_COUNT_FILE):
-        with open(VIEW_COUNT_FILE, "r") as f:
-            count = int(f.read())
-    else:
-        count = 0
-    return count
-
-def increment_view_count():
-    count = get_view_count() + 1
-    with open(VIEW_COUNT_FILE, "w") as f:
-        f.write(str(count))
-
-# Function to scrape data for top gaining tokens
 def scrape_top_gaining_tokens():
     try:
-        # Fetch the CoinMarketCap DexScan page (Ethereum and Solana)
+        # Fetch the CoinMarketCap DexScan page (Ethereum)
         response = requests.get(ETHEREUM_DEXSCAN_URL)
         soup = BeautifulSoup(response.content, 'html.parser')
 
+        # Print the page content to debug (you can inspect this in the app logs)
+        # st.write(soup.prettify())
+
         # Find the table that contains the token data
         table = soup.find('table', {'class': 'cmc-table'})
-        
-        # If the table isn't found, handle it gracefully
+
         if table is None:
             st.error("Failed to find the table with token data.")
             return []
@@ -68,28 +48,10 @@ def scrape_top_gaining_tokens():
         st.error(f"An error occurred: {e}")
         return []
 
-def get_token_data() -> list:
-    try:
-        response = requests.get(API_URL, headers=HEADERS)
-        response.raise_for_status()
-
-        data = response.json()
-        if isinstance(data, dict) and "tokens" in data:
-            tokens = data["tokens"]
-        elif isinstance(data, list):
-            tokens = data
-        else:
-            return []  # If the response isn't as expected
-
-        return tokens  # Return all tokens, no limit
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data: {e}")
-        return []
-
 def update_token_display():
     # Get the top gaining tokens
     top_gaining_tokens = scrape_top_gaining_tokens()
-    
+
     if top_gaining_tokens:
         # Display the top gaining tokens
         st.sidebar.subheader("Top 5 Gaining Tokens (Last 1 Hour)")
