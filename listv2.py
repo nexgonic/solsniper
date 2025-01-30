@@ -111,16 +111,27 @@ def update_token_display(token_data):
         token_address = token.get('tokenAddress', 'No Address Available')
         st.text_input("Token Address", value=token_address, key=f"token_address_{idx}")
 
-        # Unique button keys
+        # Construct the correct "More Info" URL based on the token's chain
+        if token.get('chain') == 'solana':
+            more_info_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
+            chart_url = f"https://dexscreener.com/solana/{token.get('tokenAddress')}"
+        elif token.get('chain') == 'ethereum':
+            more_info_url = f"https://coinmarketcap.com/dexscan/ethereum/{token.get('tokenAddress')}"
+            chart_url = f"https://dexscreener.com/ethereum/{token.get('tokenAddress')}"
+        else:
+            more_info_url = None  # Handle other chains if needed, set to None as fallback
+            chart_url = None  # Fallback for unsupported chains
+
+        # Create unique button keys
         info_button_key = f"info_button_{idx}"
         chart_button_key = f"chart_button_{idx}"
 
         # Buttons for More Info and View Chart
-        if st.button("More Info", key=info_button_key):
-            webbrowser.open(f"https://www.solsniffer.com/scanner/{token.get('tokenAddress', '')}")
+        if st.button("More Info", key=info_button_key) and more_info_url:
+            webbrowser.open(more_info_url)
 
-        if st.button("View Chart", key=chart_button_key):
-            webbrowser.open(token.get('url', ''))
+        if st.button("View Chart", key=chart_button_key) and chart_url:
+            webbrowser.open(chart_url)
 
         progress_bar.progress((idx + 1) / total_tokens)  # Update progress bar
 
