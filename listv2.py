@@ -115,7 +115,7 @@ def refresh_token_list(chain_filter=None):
 # Create the Streamlit app layout
 st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
 
-st.title("Soleth Sniper")
+st.title("Soleth Ai Sniper v1 BETA")
 st.write("Looking for the next 10x...")
 
 # Filter option for selecting chain
