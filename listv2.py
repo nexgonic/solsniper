@@ -37,9 +37,7 @@ if response.status_code == 200:
                 display: inline-block;
             }}
         </style>
-        <div class="auth-logo-container">
-            <img class="auth-logo" src="data:image/png;base64,{img_base64}" alt="Soleth Ai Sniper Logo">
-        </div>
+      
     """, unsafe_allow_html=True)
 
 if not st.session_state.authenticated:
