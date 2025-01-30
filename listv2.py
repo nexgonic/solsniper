@@ -141,7 +141,7 @@ if refresh_button_clicked:
 if not refresh_button_clicked:
     refresh_token_list(chain_filter)
 
-# Footer with copyright and social media links
+# Footer with copyright and social media links (Text color set to black and bold)
 st.markdown("""
     <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: black;">
         <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
