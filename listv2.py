@@ -3,7 +3,6 @@ import webbrowser
 import streamlit as st
 from PIL import Image
 from io import BytesIO
-import os
 
 # Set page config first, before any other Streamlit commands
 st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
@@ -117,12 +116,13 @@ def refresh_token_list(chain_filter=None):
         
         update_token_display(token_data)
 
-# Add logo above header (Centered) with the new logo source URL
-st.markdown("""
-    <div style="text-align: center;">
-        <img src="https://nextgenspeed.com/wp-content/uploads/2025/01/bannerlogo.png" width="200" height="200" alt="Soleth Ai Sniper Logo">
-    </div>
-""", unsafe_allow_html=True)
+# Fetch image dynamically and get actual dimensions
+logo_url = "https://nextgenspeed.com/wp-content/uploads/2025/01/bannerlogo.png"
+response = requests.get(logo_url)
+if response.status_code == 200:
+    img = Image.open(BytesIO(response.content))
+    width, height = img.size  # Get actual dimensions
+    st.image(img, caption="Soleth Ai Sniper Logo", width=width)
 
 # Updated Title and Message
 st.title("Soleth Ai Sniper v1 BETA")
