@@ -115,8 +115,8 @@ def refresh_token_list(chain_filter=None):
 # Create the Streamlit app layout
 st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
 
-st.title("Top Tokens on Solana and Ethereum")
-st.write("Refreshing token list...")
+st.title("Soleth Sniper")
+st.write("Looking for the next 10x...")
 
 # Filter option for selecting chain
 chain_filter = st.sidebar.radio("Select Chain", ("All Chains", "Solana", "Ethereum"))
