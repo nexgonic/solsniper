@@ -1,5 +1,4 @@
 import requests
-import pyperclip
 import threading
 import time
 import webbrowser
