@@ -16,6 +16,31 @@ HEADERS = {
     )
 }
 
+# File for storing the view count
+VIEW_COUNT_FILE = "view_count.txt"
+
+# Safe file handling to ensure the file exists
+def get_view_count():
+    # Check if the file exists before reading
+    if os.path.exists(VIEW_COUNT_FILE):
+        with open(VIEW_COUNT_FILE, "r") as f:
+            count = int(f.read())
+    else:
+        count = 21  # Start total visits at 21 if the file doesn't exist
+        # Create the file and write the initial count value
+        with open(VIEW_COUNT_FILE, "w") as f:
+            f.write(str(count))  
+    return count
+
+def increment_view_count():
+    # Increment the view count safely
+    try:
+        count = get_view_count() + 1
+        with open(VIEW_COUNT_FILE, "w") as f:
+            f.write(str(count))
+    except Exception as e:
+        st.error(f"Error incrementing view count: {e}")
+
 def get_token_data() -> list:
     try:
         response = requests.get(API_URL, headers=HEADERS)
@@ -29,8 +54,7 @@ def get_token_data() -> list:
         else:
             return []  # If the response isn't as expected
 
-        # Return the list of tokens
-        return tokens
+        return tokens  # Return all tokens, no limit
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data: {e}")
         return []
@@ -101,10 +125,11 @@ def refresh_token_list(chain_filter=None):
         update_token_display(token_data)
 
 # Create the Streamlit app layout
-st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
+st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
 
-st.title("Top Tokens on Solana and Ethereum")
-st.write("Refreshing token list...")
+# Updated Title and Message
+st.title("Soleth Ai Sniper v1 BETA")
+st.write("Looking for the next 10x...")
 
 # Filter option for selecting chain
 chain_filter = st.sidebar.radio("Select Chain", ("All Chains", "Solana", "Ethereum"))
@@ -133,7 +158,7 @@ if not refresh_button_clicked:
 st.markdown("""
     <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: black !important;">
         <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
-        <a href="https://twitter.com/nexgonic" target="_blank">
+        <a href="https://x.com/nexgonic" target="_blank">
             <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2021.svg" width="30" height="30" alt="Twitter">
         </a>
         <a href="https://t.me/Nexgonic" target="_blank">
