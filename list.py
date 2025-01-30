@@ -41,16 +41,18 @@ def append_to_log(message: str, extra_newline: bool = True) -> None:
     """
     initialize_log_area()  # Ensure the log_area is initialized
 
-    if extra_newline:
-        new_message = f"{message}\n\n"
-    else:
-        new_message = f"{message}\n"
-    
-    # Update the log content dynamically
-    st.session_state.log_area += new_message
+    # Add a newline if specified
+    new_message = f"{message}\n\n" if extra_newline else f"{message}\n"
 
-    log_container = st.empty()  # Create an empty container for the log
-    log_container.text_area("Logs", value=st.session_state.log_area, height=300, max_chars=None, key="log_area", disabled=True)
+    # Safely update the session state with the new log message
+    current_logs = st.session_state.log_area
+    updated_logs = current_logs + new_message
+
+    # Update the session state log_area only once
+    st.session_state.log_area = updated_logs
+
+    # Display the updated log
+    st.empty().text_area("Logs", value=st.session_state.log_area, height=300, max_chars=None, key="log_area", disabled=True)
 
 
 ################################################################################
