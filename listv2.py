@@ -75,6 +75,64 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
+# ✅ API Configuration
+API_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/58.0.3029.110 Safari/537.36"
+    )
+}
+
+# ✅ Function to fetch token data
+def get_token_data(chain_filter=None) -> list:
+    try:
+        response = requests.get(API_URL, headers=HEADERS)
+        response.raise_for_status()
+        data = response.json()
+
+        # Extract token list
+        if isinstance(data, dict) and "tokens" in data:
+            tokens = data["tokens"]
+        elif isinstance(data, list):
+            tokens = data
+        else:
+            return []
+
+        # ✅ Filter tokens by chain if selected
+        if chain_filter:
+            tokens = [token for token in tokens if token.get("chainId", "").lower() == chain_filter.lower()]
+
+        return tokens
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"❌ Error fetching data: {e}")
+        return []
+
+# ✅ Function to display tokens
+def update_token_display(token_data):
+    st.subheader(f"Displaying {len(token_data)} tokens...")
+
+    if len(token_data) == 0:
+        st.warning("⚠️ No tokens found for the selected chain.")
+
+    for token in token_data:
+        token_name = token.get('name', 'No Name Available')
+        st.write(f"**{token_name}**")
+        st.write(f"Token Address: {token.get('tokenAddress', 'No Address Available')}")
+        st.write(f"Liquidity: {token.get('liquidity', 'N/A')}")
+        st.write(f"Volume: {token.get('volume', 'N/A')}")
+        st.write(f"Holders: {token.get('holders', 'N/A')}")
+
+        # Display token logo if available
+        icon_url = token.get('icon', '')
+        if icon_url:
+            response = requests.get(icon_url)
+            img_data = Image.open(BytesIO(response.content))
+            img_data = img_data.resize((50, 50))
+            st.image(img_data)
+
 # ✅ Sidebar Filter option for selecting chain
 chain_filter = st.sidebar.radio("Select Chain", ("All Chains", "Solana", "Ethereum"))
 
