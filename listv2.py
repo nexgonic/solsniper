@@ -5,9 +5,6 @@ from PIL import Image
 from io import BytesIO
 import os
 
-# Set page config first
-st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
-
 # Define the API URL and headers for the request
 API_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
 FETCH_INTERVAL = 10  # Interval (in seconds) between consecutive fetches
@@ -112,6 +109,9 @@ def refresh_token_list(chain_filter=None):
         
         update_token_display(token_data)
 
+# Create the Streamlit app layout
+st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
+
 # Add logo above header (Centered) with new logo source URL
 st.markdown("""
     <div style="text-align: center;">
@@ -156,10 +156,17 @@ st.markdown("""
     </footer>
 """, unsafe_allow_html=True)
 
-# Sticky bottom bar with black background
+# Sticky bottom bar with black background and social media icons next to the text
 st.markdown("""
     <div style="position: fixed; bottom: 0; left: 0; width: 100%; background-color: black; 
     text-align: center; padding: 10px; font-size: 14px; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); color: white;">
-        <p style="margin: 0;">Let us know what you think and features you would like to see.</p>
+        <p style="margin: 0;">Let us know what you think and features you would like to see.
+        <a href="https://x.com/nexgonic" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2021.svg" width="30" height="30" alt="Twitter">
+        </a>
+        <a href="https://t.me/Nexgonic" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/8/83/Telegram_2015_logo.svg" width="30" height="30" alt="Telegram">
+        </a>
+        </p>
     </div>
 """, unsafe_allow_html=True)
