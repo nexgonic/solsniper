@@ -112,15 +112,15 @@ def refresh_token_list(chain_filter=None):
         update_token_display(token_data)
 
 # Track active users using session_state
-if "user_ips" not in st.session_state:
-    st.session_state["user_ips"] = set()  # Store unique IPs
+if "user_ids" not in st.session_state:
+    st.session_state["user_ids"] = set()  # Store unique session identifiers
 if "user_count" not in st.session_state:
     st.session_state["user_count"] = 1  # Start user count at 1 (for the first user)
 else:
-    # Get the user's IP and track unique users
-    user_ip = st.request.remote_addr  # Fetch user IP
-    if user_ip not in st.session_state["user_ips"]:
-        st.session_state["user_ips"].add(user_ip)
+    # Use session_id as unique identifier instead of IP
+    user_id = st.session_state.session_id
+    if user_id not in st.session_state["user_ids"]:
+        st.session_state["user_ids"].add(user_id)
         st.session_state["user_count"] += 1
 
 # Create the Streamlit app layout
