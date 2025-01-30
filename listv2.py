@@ -10,6 +10,22 @@ import os
 ETHEREUM_DEXSCAN_URL = "https://coinmarketcap.com/dexscan/ethereum"
 SOLANA_DEXSCAN_URL = "https://coinmarketcap.com/dexscan/solana"
 
+# File for storing the view count
+VIEW_COUNT_FILE = "view_count.txt"
+
+def get_view_count():
+    if os.path.exists(VIEW_COUNT_FILE):
+        with open(VIEW_COUNT_FILE, "r") as f:
+            count = int(f.read())
+    else:
+        count = 0
+    return count
+
+def increment_view_count():
+    count = get_view_count() + 1
+    with open(VIEW_COUNT_FILE, "w") as f:
+        f.write(str(count))
+
 # Function to scrape data for top gaining tokens
 def scrape_top_gaining_tokens():
     # Fetch the CoinMarketCap DexScan page (Ethereum and Solana)
@@ -37,19 +53,6 @@ def scrape_top_gaining_tokens():
     # Sort by percentage change and return the top 5
     tokens_sorted = sorted(tokens, key=lambda x: x[1], reverse=True)[:5]
     return tokens_sorted
-
-def get_view_count():
-    if os.path.exists("view_count.txt"):
-        with open("view_count.txt", "r") as f:
-            count = int(f.read())
-    else:
-        count = 0
-    return count
-
-def increment_view_count():
-    count = get_view_count() + 1
-    with open("view_count.txt", "w") as f:
-        f.write(str(count))
 
 def get_token_data() -> list:
     try:
@@ -98,3 +101,9 @@ update_token_display()
 # Add a refresh button
 if st.button("Refresh Tokens"):
     update_token_display()
+
+# Track visit count and update
+increment_view_count()
+
+# Display the visit count in the sidebar
+st.sidebar.write(f"**Total Visits**: {get_view_count()}")
