@@ -1,6 +1,6 @@
-import streamlit as st
 import requests
 import webbrowser
+import streamlit as st
 from PIL import Image
 from io import BytesIO
 import os
