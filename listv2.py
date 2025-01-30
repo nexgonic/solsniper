@@ -16,6 +16,16 @@ HEADERS = {
     )
 }
 
+# Use Google Fonts to set a futuristic font
+st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 def get_token_data() -> list:
     try:
         response = requests.get(API_URL, headers=HEADERS)
@@ -133,7 +143,7 @@ if refresh_button_clicked:
 if not refresh_button_clicked:
     refresh_token_list(chain_filter)
 
-# Footer with copyright and social media links (Text color set to white, bold)
+# Footer with copyright and social media links (Text color set to white, bold, and black background)
 st.markdown("""
     <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: white !important; background-color: black;">
         <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
@@ -146,10 +156,10 @@ st.markdown("""
     </footer>
 """, unsafe_allow_html=True)
 
-# Sticky bottom bar with message
+# Sticky bottom bar with black background
 st.markdown("""
-    <div style="position: fixed; bottom: 0; left: 0; width: 100%; background-color: #f8f9fa; 
-    text-align: center; padding: 10px; font-size: 14px; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);">
+    <div style="position: fixed; bottom: 0; left: 0; width: 100%; background-color: black; 
+    text-align: center; padding: 10px; font-size: 14px; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); color: white;">
         <p style="margin: 0;">Let us know what you think and features you would like to see.</p>
     </div>
 """, unsafe_allow_html=True)
