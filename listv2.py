@@ -29,7 +29,8 @@ def get_token_data() -> list:
         else:
             return []  # If the response isn't as expected
 
-        return tokens  # Return all tokens, no limit
+        # Return the list of tokens
+        return tokens
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data: {e}")
         return []
@@ -102,8 +103,8 @@ def refresh_token_list(chain_filter=None):
 # Create the Streamlit app layout
 st.set_page_config(page_title="Newest Tokens on Solana and Ethereum", layout="wide")
 
-st.title("SOLETH Ai Sniper")
-st.write("Anaylazing the next 10x...")
+st.title("Top Tokens on Solana and Ethereum")
+st.write("Refreshing token list...")
 
 # Filter option for selecting chain
 chain_filter = st.sidebar.radio("Select Chain", ("All Chains", "Solana", "Ethereum"))
@@ -130,9 +131,9 @@ if not refresh_button_clicked:
 
 # Footer with copyright and social media links (Text color set to black and bold)
 st.markdown("""
-    <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: black;">
+    <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: black !important;">
         <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
-        <a href="https://x.com/nexgonic" target="_blank">
+        <a href="https://twitter.com/nexgonic" target="_blank">
             <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2021.svg" width="30" height="30" alt="Twitter">
         </a>
         <a href="https://t.me/Nexgonic" target="_blank">
