@@ -21,7 +21,7 @@ if not st.session_state.authenticated:
         if password == PASSWORD:
             st.session_state.authenticated = True  # Store authentication status
             st.success("✅ Access granted! Welcome to Soleth Ai Sniper v1 BETA")
-            st.experimental_set_query_params(authenticated="true")  # Store state without rerunning
+            st.query_params["authenticated"] = "true"  # ✅ Updated to new query_params method
         else:
             st.warning("❌ Incorrect password. Try again.")
 
