@@ -111,12 +111,16 @@ def update_token_display(token_data):
         token_address = token.get('tokenAddress', 'No Address Available')
         st.text_input("Token Address", value=token_address, key=f"token_address_{idx}")
 
+        # Create unique button keys to differentiate each button for each token
+        info_button_key = f"info_button_{idx}"
+        chart_button_key = f"chart_button_{idx}"
+
         # Buttons for Info
-        info_button = st.button("More Info", key=f"info_{idx}")
+        info_button = st.button("More Info", key=info_button_key)
         if info_button:
             webbrowser.open(f"https://www.solsniffer.com/scanner/{token.get('tokenAddress', '')}")
 
-        chart_button = st.button("View Chart", key=f"chart_{idx}")
+        chart_button = st.button("View Chart", key=chart_button_key)
         if chart_button:
             webbrowser.open(token.get('url', ''))
 
