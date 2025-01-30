@@ -109,7 +109,7 @@ def get_token_data(chain_filter=None) -> list:
 
 # ✅ Function to display tokens
 def update_token_display(token_data):
-    st.subheader(f"Displaying {len(token_data)} tokens...")
+    st.subheader(f"Fetched, analyzed, and scanned {len(token_data)} tokens...")
 
     if len(token_data) == 0:
         st.warning("⚠️ No tokens found for the selected chain.")
