@@ -1,6 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
 import streamlit as st
+import webbrowser
+from PIL import Image
+from io import BytesIO
+import os
 
 # Define the CoinMarketCap DexScan URL
 ETHEREUM_DEXSCAN_URL = "https://coinmarketcap.com/dexscan/ethereum"
@@ -34,6 +38,37 @@ def scrape_top_gaining_tokens():
     tokens_sorted = sorted(tokens, key=lambda x: x[1], reverse=True)[:5]
     return tokens_sorted
 
+def get_view_count():
+    if os.path.exists("view_count.txt"):
+        with open("view_count.txt", "r") as f:
+            count = int(f.read())
+    else:
+        count = 0
+    return count
+
+def increment_view_count():
+    count = get_view_count() + 1
+    with open("view_count.txt", "w") as f:
+        f.write(str(count))
+
+def get_token_data() -> list:
+    try:
+        response = requests.get(API_URL, headers=HEADERS)
+        response.raise_for_status()
+
+        data = response.json()
+        if isinstance(data, dict) and "tokens" in data:
+            tokens = data["tokens"]
+        elif isinstance(data, list):
+            tokens = data
+        else:
+            return []  # If the response isn't as expected
+
+        return tokens  # Return all tokens, no limit
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data: {e}")
+        return []
+
 def update_token_display():
     # Get the top gaining tokens
     top_gaining_tokens = scrape_top_gaining_tokens()
@@ -49,7 +84,6 @@ st.title("Live Top Gaining Tokens (Last 1 Hour)")
 
 # Show live user count and visit count
 st.sidebar.markdown("### Live Metrics")
-# This will be based on the number of active sessions. You can also store a counter file for total visits.
 st.sidebar.write(f"**Live Users**: {st.session_state.get('user_count', 1)}")
 
 # Track active users using session_state
