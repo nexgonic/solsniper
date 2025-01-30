@@ -29,6 +29,11 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Embed Font Awesome for social media icons
+st.markdown("""
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+""", unsafe_allow_html=True)
+
 def get_token_data() -> list:
     try:
         response = requests.get(API_URL, headers=HEADERS)
@@ -148,10 +153,10 @@ st.markdown("""
     <footer style="text-align:center; padding: 10px; font-size: 14px; font-weight: bold; color: white !important; background-color: black;">
         <p>&copy; 2025 NEXTGONIC. All rights reserved.</p>
         <a href="https://x.com/nexgonic" target="_blank">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2021.svg" width="30" height="30" alt="Twitter">
+            <i class="fab fa-twitter" style="font-size: 30px; color: white;"></i>
         </a>
         <a href="https://t.me/Nexgonic" target="_blank">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/8/83/Telegram_2015_logo.svg" width="30" height="30" alt="Telegram">
+            <i class="fab fa-telegram" style="font-size: 30px; color: white;"></i>
         </a>
     </footer>
 """, unsafe_allow_html=True)
@@ -162,10 +167,10 @@ st.markdown("""
     text-align: center; padding: 10px; font-size: 14px; box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); color: white;">
         <p style="margin: 0;">Let us know what you think and features you would like to see.
         <a href="https://x.com/nexgonic" target="_blank">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2021.svg" width="30" height="30" alt="Twitter">
+            <i class="fab fa-twitter" style="font-size: 30px; color: white;"></i>
         </a>
         <a href="https://t.me/Nexgonic" target="_blank">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/8/83/Telegram_2015_logo.svg" width="30" height="30" alt="Telegram">
+            <i class="fab fa-telegram" style="font-size: 30px; color: white;"></i>
         </a>
         </p>
     </div>
