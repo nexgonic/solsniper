@@ -1,18 +1,45 @@
+import time
 import requests
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import streamlit as st
+import os
 
 # Define the CoinMarketCap DexScan URL
 ETHEREUM_DEXSCAN_URL = "https://coinmarketcap.com/dexscan/ethereum"
 
+# File for storing the view count
+VIEW_COUNT_FILE = "view_count.txt"
+
+def get_view_count():
+    if os.path.exists(VIEW_COUNT_FILE):
+        with open(VIEW_COUNT_FILE, "r") as f:
+            count = int(f.read())
+    else:
+        count = 0
+    return count
+
+def increment_view_count():
+    count = get_view_count() + 1
+    with open(VIEW_COUNT_FILE, "w") as f:
+        f.write(str(count))
+
+# Function to scrape data for top gaining tokens using Selenium
 def scrape_top_gaining_tokens():
     try:
-        # Fetch the CoinMarketCap DexScan page (Ethereum)
-        response = requests.get(ETHEREUM_DEXSCAN_URL)
-        soup = BeautifulSoup(response.content, 'html.parser')
+        # Set up Selenium with headless Chrome
+        options = Options()
+        options.add_argument('--headless')  # Run in headless mode (no UI)
+        options.add_argument('--disable-gpu')
+        driver = webdriver.Chrome(options=options)
 
-        # Print the page content to debug (you can inspect this in the app logs)
-        # st.write(soup.prettify())
+        # Fetch the CoinMarketCap DexScan page (Ethereum)
+        driver.get(ETHEREUM_DEXSCAN_URL)
+        time.sleep(5)  # Wait for the page to load
+
+        # Parse the page source using BeautifulSoup
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         # Find the table that contains the token data
         table = soup.find('table', {'class': 'cmc-table'})
@@ -39,6 +66,7 @@ def scrape_top_gaining_tokens():
 
         # Sort by percentage change and return the top 5
         tokens_sorted = sorted(tokens, key=lambda x: x[1], reverse=True)[:5]
+        driver.quit()
         return tokens_sorted
 
     except requests.exceptions.RequestException as e:
