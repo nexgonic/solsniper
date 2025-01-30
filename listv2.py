@@ -1,12 +1,12 @@
-# Set page config first
-st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
-
+import streamlit as st
 import requests
 import webbrowser
-import streamlit as st
 from PIL import Image
 from io import BytesIO
 import os
+
+# Set page config first, before any other Streamlit commands
+st.set_page_config(page_title="Soleth Ai Sniper v1 BETA", layout="wide")
 
 # Define the API URL and headers for the request
 API_URL = "https://api.dexscreener.com/token-profiles/latest/v1"
