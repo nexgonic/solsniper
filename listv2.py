@@ -108,11 +108,11 @@ def update_token_display(token_data):
             img_data = img_data.resize((50, 50))
             st.image(img_data)
 
-        # Buttons for Copy and Info
-        copy_button = st.button("Copy Address", key=f"copy_{idx}")
-        if copy_button:
-            pyperclip.copy(token.get('tokenAddress', 'No Address Available'))
+        # Instead of copying to clipboard, use a text input for the token address
+        token_address = token.get('tokenAddress', 'No Address Available')
+        st.text_input("Token Address", value=token_address, key=f"token_address_{idx}")
 
+        # Buttons for Info
         info_button = st.button("More Info", key=f"info_{idx}")
         if info_button:
             webbrowser.open(f"https://www.solsniffer.com/scanner/{token.get('tokenAddress', '')}")
