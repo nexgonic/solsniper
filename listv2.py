@@ -117,10 +117,10 @@ def refresh_token_list(chain_filter=None):
         
         update_token_display(token_data)
 
-# Add logo above header (Centered) with new logo source URL
+# Add logo above header (Centered) with the new logo source URL
 st.markdown("""
     <div style="text-align: center;">
-        <img src="https://nextgenspeed.com/wp-content/uploads/2025/01/nexgonico_trans.png" width="200" height="200" alt="Soleth Ai Sniper Logo">
+        <img src="https://nextgenspeed.com/wp-content/uploads/2025/01/bannerlogo.png" width="200" height="200" alt="Soleth Ai Sniper Logo">
     </div>
 """, unsafe_allow_html=True)
 
