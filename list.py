@@ -35,9 +35,18 @@ def append_to_log(message: str, extra_newline: bool = True) -> None:
     Appends plain text to the log with optional extra spacing.
     """
     if extra_newline:
-        st.text_area("Logs", value=f"{message}\n\n", height=300, max_chars=None, key="log_area", disabled=True)
+        new_message = f"{message}\n\n"
     else:
-        st.text_area("Logs", value=f"{message}\n", height=300, max_chars=None, key="log_area", disabled=True)
+        new_message = f"{message}\n"
+    
+    # Update the log content dynamically
+    if "log_area" not in st.session_state:
+        st.session_state.log_area = ""  # Initialize log_area if not yet set
+    
+    st.session_state.log_area += new_message
+
+    log_container = st.empty()  # Create an empty container for the log
+    log_container.text_area("Logs", value=st.session_state.log_area, height=300, max_chars=None, key="log_area", disabled=True)
 
 
 ################################################################################
@@ -199,7 +208,7 @@ def fetch_process():
 
 
 def main():
-    st.title("Nexgonic Top SOL/ETH Tokens")
+    st.title("Web 3.0 Dexscreener Tokens")
     st.subheader("Prolif SOL Sniper v1")
 
     st.sidebar.header("Controls")
